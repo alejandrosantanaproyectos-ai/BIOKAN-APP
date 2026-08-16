@@ -3,32 +3,442 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Biokan - Control Mantenimientos</title>
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Biokan - Control de Mantenimiento</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: #f1f5f9;
-    }
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-    }
+    body { background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .card-custom { border-radius: 12px; border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+    .header-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 12px 12px 0 0; padding: 20px; }
+    .btn-primary-custom { background-color: #0284c7; border: none; border-radius: 6px; font-weight: 600; }
+    .btn-primary-custom:hover { background-color: #0369a1; }
+    .preview-box { width: 100%; height: 140px; border: 2px dashed #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #ffffff; }
+    .preview-box img { width: 100%; height: 100%; object-fit: cover; }
+    .loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
   </style>
 </head>
 <body>
-  <iframe 
-    src="https://script.google.com/macros/s/AKfycbxQu93NZy-M8W6lKcs9kV68AOapeM-Tt0kgmMNcglOoAk1IDZjfGJ3cbj3co3wK0Q/exec" 
-    allow="camera; microphone; geolocation"
-    loading="eager">
-  </iframe>
+
+  <div class="loader" id="loader">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+    <div class="mt-3 fw-bold text-secondary" id="loaderText">Cargando...</div>
+  </div>
+
+  <div class="container py-4" style="max-width: 640px;">
+    
+    <!-- VISTA LOGIN -->
+    <div class="card card-custom mb-4" id="viewLogin">
+      <div class="header-box text-center">
+        <h4 class="mb-1"><i class="bi bi-shield-lock me-2"></i>Acceso Técnicos Biokan</h4>
+        <small class="text-white-50">Acceso seguro a operaciones de campo</small>
+      </div>
+      <div class="card-body p-4">
+        <form id="formLogin" onsubmit="handleLogin(event)">
+          <div class="mb-3">
+            <label class="form-label fw-bold text-secondary" for="loginUser">Usuario</label>
+            <input type="text" class="form-control form-control-lg" id="loginUser" autocomplete="username" required maxlength="50" placeholder="Ej: TB01">
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-bold text-secondary" for="loginPass">Contraseña</label>
+            <input type="password" class="form-control form-control-lg" id="loginPass" autocomplete="current-password" required maxlength="100" placeholder="••••••••">
+          </div>
+          <div class="alert alert-danger d-none" id="loginAlert" role="alert"></div>
+          <button type="submit" class="btn btn-primary-custom w-100 py-2 text-white fs-5" id="btnLoginSubmit">Iniciar Sesión</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- VISTA FORMULARIO INTERVENCIÓN -->
+    <div class="card card-custom d-none" id="viewForm">
+      <div class="header-box d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-0 text-white"><i class="bi bi-tools me-2"></i>Parte de Mantenimiento</h5>
+          <small class="text-white-50" id="userBadge"></small>
+        </div>
+        <button class="btn btn-sm btn-outline-light" type="button" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i> Salir</button>
+      </div>
+
+      <div class="card-body p-4">
+        <div class="alert alert-danger d-none" id="formAlert" role="alert"></div>
+
+        <form id="formIntervencion" onsubmit="handleGuardarIntervencion(event)">
+          
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-secondary" for="fechaMantenimiento">Fecha de Intervención *</label>
+              <input type="date" class="form-control" id="fechaMantenimiento" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-secondary" for="tecnicoNombre">Técnico Responsable</label>
+              <input type="text" class="form-control bg-light" id="tecnicoNombre" readonly>
+            </div>
+          </div>
+
+          <!-- SELECTORES EN CASCADA -->
+          <div class="p-3 bg-light rounded-3 mb-3 border">
+            <div class="mb-3">
+              <label class="form-label fw-bold text-dark" for="selEmpresa">1. Empresa (Cliente) *</label>
+              <select class="form-select" id="selEmpresa" onchange="onEmpresaChange()" required>
+                <option value="">-- Seleccionar Empresa --</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold text-dark" for="selLocal">2. Local *</label>
+              <select class="form-select" id="selLocal" onchange="onLocalChange()" required disabled>
+                <option value="">-- Seleccionar Local --</option>
+              </select>
+            </div>
+
+            <div class="row g-2">
+              <div class="col-md-8">
+                <label class="form-label fw-bold text-dark" for="selEquipo">3. ID / Nº Serie Equipo *</label>
+                <select class="form-select" id="selEquipo" onchange="onEquipoChange()" required disabled>
+                  <option value="">-- Seleccionar Equipo --</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-bold text-secondary" for="txtModelo">Modelo</label>
+                <input type="text" class="form-control bg-white" id="txtModelo" readonly placeholder="-">
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-secondary" for="tipoMantenimiento">Tipo de Mantenimiento *</label>
+              <select class="form-select" id="tipoMantenimiento" required>
+                <option value="Programado">Programado</option>
+                <option value="Reparacion">Reparación</option>
+                <option value="Instalacion">Instalación</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-secondary" for="estadoFinal">Estado Final del Equipo *</label>
+              <select class="form-select" id="estadoFinal" required>
+                <option value="Operativo">Operativo</option>
+                <option value="Operativo con restricciones">Operativo con restricciones</option>
+                <option value="Fuera de servicio">Fuera de servicio</option>
+                <option value="En espera de repuestos">En espera de repuestos</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label fw-bold text-secondary" for="descripcion">Descripción de las actividades realizadas *</label>
+            <textarea class="form-control" id="descripcion" rows="3" required maxlength="2000" placeholder="Detalle técnico de la actuación..."></textarea>
+          </div>
+
+          <div class="mb-4">
+            <label class="form-label fw-bold text-secondary" for="observaciones">Observaciones / Acciones pendientes</label>
+            <textarea class="form-control" id="observaciones" rows="2" maxlength="2000" placeholder="Materiales necesarios, notas adicionales..."></textarea>
+          </div>
+
+          <!-- FOTOGRAFÍAS -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-secondary" for="fileEquipo"><i class="bi bi-camera me-1"></i>Foto Equipo Terminado</label>
+              <input type="file" class="form-control mb-2" id="fileEquipo" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="procesarYPrevisualizar(this, 'imgEquipoPreview', 'txtEquipoPlaceholder')">
+              <div class="preview-box">
+                <img id="imgEquipoPreview" src="" class="d-none" alt="Vista previa equipo">
+                <span class="text-muted small" id="txtEquipoPlaceholder">Sin captura</span>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold text-secondary" for="fileAlbaran"><i class="bi bi-file-earmark-image me-1"></i>Foto Albarán de Visita</label>
+              <input type="file" class="form-control mb-2" id="fileAlbaran" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="procesarYPrevisualizar(this, 'imgAlbaranPreview', 'txtAlbaranPlaceholder')">
+              <div class="preview-box">
+                <img id="imgAlbaranPreview" src="" class="d-none" alt="Vista previa albarán">
+                <span class="text-muted small" id="txtAlbaranPlaceholder">Sin captura</span>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnSubmit">
+            <i class="bi bi-cloud-arrow-up me-2"></i>Registrar Intervención
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // URL DE LA API EN APPS SCRIPT
+    const API_URL = "https://script.google.com/macros/s/AKfycbwym5gdXUt0PIKAaCMyHvAzH_M-XzjDksAZZFSoNJeGgaLGGGcyM707TA5NejJJxoYh/exec";
+
+    let dbRutas = {};
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('fechaMantenimiento').valueAsDate = new Date();
+      verificarSesionExistente();
+    });
+
+    function setLoader(show, text = 'Cargando...') {
+      const loader = document.getElementById('loader');
+      document.getElementById('loaderText').textContent = text;
+      loader.style.display = show ? 'flex' : 'none';
+    }
+
+    function mostrarAlerta(elemId, msg) {
+      const el = document.getElementById(elemId);
+      if (msg) {
+        el.textContent = msg;
+        el.classList.remove('d-none');
+      } else {
+        el.textContent = '';
+        el.classList.add('d-none');
+      }
+    }
+
+    // Comunicación directa con Apps Script mediante fetch (sin cuentas de Google)
+    async function llamarAPI(accion, payloadExtra = {}) {
+      try {
+        const bodyData = JSON.stringify({ accion: accion, ...payloadExtra });
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: bodyData
+        });
+        return await res.json();
+      } catch (err) {
+        console.error('Error de red API:', err);
+        return { success: false, error: 'Error de comunicación con el servidor.' };
+      }
+    }
+
+    function verificarSesionExistente() {
+      const token = sessionStorage.getItem('AUTH_TOKEN');
+      const tecnico = sessionStorage.getItem('AUTH_TECNICO');
+      if (token && tecnico) {
+        document.getElementById('tecnicoNombre').value = tecnico;
+        document.getElementById('userBadge').textContent = tecnico;
+        cargarRutas(token);
+      }
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value.trim();
+      
+      mostrarAlerta('loginAlert', null);
+      setLoader(true, 'Verificando credenciales...');
+      document.getElementById('btnLoginSubmit').disabled = true;
+
+      const res = await llamarAPI('login', { usuario: u, clave: p });
+      
+      setLoader(false);
+      document.getElementById('btnLoginSubmit').disabled = false;
+
+      if (res.success) {
+        sessionStorage.setItem('AUTH_TOKEN', res.token);
+        sessionStorage.setItem('AUTH_TECNICO', res.tecnico);
+        document.getElementById('tecnicoNombre').value = res.tecnico;
+        document.getElementById('userBadge').textContent = res.tecnico;
+        document.getElementById('loginPass').value = '';
+        cargarRutas(res.token);
+      } else {
+        mostrarAlerta('loginAlert', res.error || 'Credenciales inválidas.');
+      }
+    }
+
+    async function handleLogout() {
+      const token = sessionStorage.getItem('AUTH_TOKEN');
+      setLoader(true, 'Cerrando sesión...');
+      sessionStorage.clear();
+      await llamarAPI('logout', { token: token });
+      location.reload();
+    }
+
+    function sesionExpirada() {
+      sessionStorage.clear();
+      alert('Su sesión ha caducado. Por favor, inicie sesión nuevamente.');
+      location.reload();
+    }
+
+    async function cargarRutas(token) {
+      setLoader(true, 'Cargando datos de planificación...');
+      const res = await llamarAPI('obtenerEquipos', { token: token });
+      setLoader(false);
+
+      if (res.sessionExpired) {
+        sesionExpirada();
+        return;
+      }
+
+      if (res.success) {
+        dbRutas = res.datos || {};
+        poblarEmpresas();
+        document.getElementById('viewLogin').classList.add('d-none');
+        document.getElementById('viewForm').classList.remove('d-none');
+      } else {
+        mostrarAlerta('formAlert', res.error || 'No se pudieron obtener las rutas.');
+      }
+    }
+
+    function limpiarSelect(selectElement, defaultText) {
+      while (selectElement.firstChild) selectElement.removeChild(selectElement.firstChild);
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = '';
+      defaultOpt.textContent = defaultText;
+      selectElement.appendChild(defaultOpt);
+    }
+
+    function poblarEmpresas() {
+      const sel = document.getElementById('selEmpresa');
+      limpiarSelect(sel, '-- Seleccionar Empresa --');
+      Object.keys(dbRutas).sort().forEach(empresa => {
+        const opt = document.createElement('option');
+        opt.value = empresa;
+        opt.textContent = empresa;
+        sel.appendChild(opt);
+      });
+    }
+
+    function onEmpresaChange() {
+      const empresa = document.getElementById('selEmpresa').value;
+      const selLocal = document.getElementById('selLocal');
+      const selEquipo = document.getElementById('selEquipo');
+      document.getElementById('txtModelo').value = '';
+
+      limpiarSelect(selLocal, '-- Seleccionar Local --');
+      limpiarSelect(selEquipo, '-- Seleccionar Equipo --');
+      selEquipo.disabled = true;
+
+      if (empresa && dbRutas[empresa]) {
+        Object.keys(dbRutas[empresa]).sort().forEach(local => {
+          const opt = document.createElement('option');
+          opt.value = local;
+          opt.textContent = local;
+          selLocal.appendChild(opt);
+        });
+        selLocal.disabled = false;
+      } else {
+        selLocal.disabled = true;
+      }
+    }
+
+    function onLocalChange() {
+      const empresa = document.getElementById('selEmpresa').value;
+      const local = document.getElementById('selLocal').value;
+      const selEquipo = document.getElementById('selEquipo');
+      document.getElementById('txtModelo').value = '';
+
+      limpiarSelect(selEquipo, '-- Seleccionar Equipo --');
+
+      if (empresa && local && dbRutas[empresa][local]) {
+        dbRutas[empresa][local].forEach(eq => {
+          const opt = document.createElement('option');
+          opt.value = eq.idEquipo;
+          opt.textContent = eq.idEquipo + ' (' + eq.modelo + ')';
+          opt.setAttribute('data-modelo', eq.modelo);
+          selEquipo.appendChild(opt);
+        });
+        selEquipo.disabled = false;
+      } else {
+        selEquipo.disabled = true;
+      }
+    }
+
+    function onEquipoChange() {
+      const selEquipo = document.getElementById('selEquipo');
+      const opt = selEquipo.options[selEquipo.selectedIndex];
+      document.getElementById('txtModelo').value = opt ? opt.getAttribute('data-modelo') : '';
+    }
+
+    function procesarYPrevisualizar(input, imgPreviewId, placeholderId) {
+      const file = input.files[0];
+      const preview = document.getElementById(imgPreviewId);
+      const placeholder = document.getElementById(placeholderId);
+
+      if (file) {
+        if (file.size > 5242880) {
+          alert('El archivo supera el límite de 5 MB.');
+          input.value = '';
+          preview.classList.add('d-none');
+          placeholder.classList.remove('d-none');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          preview.src = e.target.result;
+          preview.classList.remove('d-none');
+          placeholder.classList.add('d-none');
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function leerArchivoBase64(inputElement) {
+      return new Promise((resolve) => {
+        const file = inputElement.files[0];
+        if (!file) return resolve('');
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function generarClaveIdempotencia() {
+      return 'IDEM_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
+    }
+
+    async function handleGuardarIntervencion(e) {
+      e.preventDefault();
+      const token = sessionStorage.getItem('AUTH_TOKEN');
+      if (!token) {
+        sesionExpirada();
+        return;
+      }
+
+      mostrarAlerta('formAlert', null);
+      const btnSubmit = document.getElementById('btnSubmit');
+      btnSubmit.disabled = true;
+      setLoader(true, 'Guardando intervención...');
+
+      const fotoEquipoBase64 = await leerArchivoBase64(document.getElementById('fileEquipo'));
+      const fotoAlbaranBase64 = await leerArchivoBase64(document.getElementById('fileAlbaran'));
+
+      const payload = {
+        idempotencyKey: generarClaveIdempotencia(),
+        fechaMantenimiento: document.getElementById('fechaMantenimiento').value,
+        empresa: document.getElementById('selEmpresa').value,
+        local: document.getElementById('selLocal').value,
+        idEquipo: document.getElementById('selEquipo').value,
+        tipoMantenimiento: document.getElementById('tipoMantenimiento').value,
+        estadoFinal: document.getElementById('estadoFinal').value,
+        descripcion: document.getElementById('descripcion').value,
+        observaciones: document.getElementById('observaciones').value,
+        fotoEquipoBase64: fotoEquipoBase64,
+        fotoAlbaranBase64: fotoAlbaranBase64
+      };
+
+      const res = await llamarAPI('registrarIntervencion', { token: token, payload: payload });
+      
+      setLoader(false);
+      btnSubmit.disabled = false;
+
+      if (res.sessionExpired) {
+        sesionExpirada();
+        return;
+      }
+
+      if (res.success) {
+        alert('¡Intervención registrada correctamente!');
+        document.getElementById('formIntervencion').reset();
+        document.getElementById('fechaMantenimiento').valueAsDate = new Date();
+        document.getElementById('selLocal').disabled = true;
+        document.getElementById('selEquipo').disabled = true;
+        document.getElementById('imgEquipoPreview').classList.add('d-none');
+        document.getElementById('imgAlbaranPreview').classList.add('d-none');
+        document.getElementById('txtEquipoPlaceholder').classList.remove('d-none');
+        document.getElementById('txtAlbaranPlaceholder').classList.remove('d-none');
+      } else {
+        mostrarAlerta('formAlert', res.error || 'No se pudo guardar la intervención.');
+      }
+    }
+  </script>
 </body>
 </html>
