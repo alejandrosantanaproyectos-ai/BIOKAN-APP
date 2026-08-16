@@ -3,89 +3,175 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Biokan - Control de Mantenimiento</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <title>Biokan - Gestión de Intervenciones</title>
+  
+  <!-- CSS Bootstrap y Bootstrap Icons con SRI Integrity -->
+  <link rel="stylesheet" 
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
+        crossorigin="anonymous">
+  <link rel="stylesheet" 
+        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" 
+        integrity="sha384-4LISF5TTJX/fLmGSxO53rV4miRxdg84mZsxmO8Rx5jGtp/LbrixFETvWa5a6sESd" 
+        crossorigin="anonymous">
+
   <style>
-    body { background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    .card-custom { border-radius: 12px; border: none; box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
-    .header-box { background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; border-radius: 12px 12px 0 0; padding: 20px; }
-    .btn-primary-custom { background-color: #0284c7; border: none; border-radius: 6px; font-weight: 600; }
-    .btn-primary-custom:hover { background-color: #0369a1; }
-    .preview-box { width: 100%; height: 140px; border: 2px dashed #cbd5e1; border-radius: 6px; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #ffffff; }
-    .preview-box img { width: 100%; height: 100%; object-fit: cover; }
-    .loader { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; }
+    :root {
+      --bk-primary: #0284c7;
+      --bk-primary-hover: #0369a1;
+      --bk-dark: #0f172a;
+      --bk-surface: #ffffff;
+      --bk-bg: #f8fafc;
+    }
+    body {
+      background-color: var(--bk-bg);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #334155;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card-custom {
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      background-color: var(--bk-surface);
+      overflow: hidden;
+    }
+    .header-box {
+      background: linear-gradient(135deg, #1e293b 0%, var(--bk-dark) 100%);
+      color: #ffffff;
+      padding: 24px;
+    }
+    .btn-primary-custom {
+      background-color: var(--bk-primary);
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+    .btn-primary-custom:hover:not(:disabled) {
+      background-color: var(--bk-primary-hover);
+    }
+    .btn-primary-custom:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+    .preview-container {
+      width: 100%;
+      height: 160px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      background-color: #f1f5f9;
+      position: relative;
+    }
+    .preview-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .img-meta-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 4px;
+      display: block;
+    }
+    .loader-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: #ffffff;
+    }
+    .form-control:focus, .form-select:focus {
+      border-color: var(--bk-primary);
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    }
   </style>
 </head>
 <body>
 
-  <div class="loader" id="loader">
-    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
-    <div class="mt-3 fw-bold text-secondary" id="loaderText">Cargando...</div>
+  <!-- SPINNER GLOBAL CON MENSAJES DINÁMICOS -->
+  <div class="loader-overlay" id="loaderOverlay" role="alert" aria-live="assertive">
+    <div class="spinner-border text-info" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
+    <div class="mt-3 fw-bold fs-5" id="loaderStatusText">Cargando...</div>
+    <small class="text-white-50 mt-1" id="loaderSubText">Por favor, espere</small>
   </div>
 
-  <div class="container py-4" style="max-width: 640px;">
+  <div class="container py-4" style="max-width: 680px;">
     
-    <!-- VISTA LOGIN -->
+    <!-- PANTALLA: LOGIN -->
     <div class="card card-custom mb-4" id="viewLogin">
       <div class="header-box text-center">
-        <h4 class="mb-1"><i class="bi bi-shield-lock me-2"></i>Acceso Técnicos Biokan</h4>
-        <small class="text-white-50">Acceso seguro a operaciones de campo</small>
+        <h4 class="mb-1"><i class="bi bi-shield-lock-fill text-info me-2"></i>Acceso Operativo Biokan</h4>
+        <small class="text-white-50">Portal técnico de intervenciones de campo</small>
       </div>
       <div class="card-body p-4">
-        <form id="formLogin" onsubmit="handleLogin(event)">
+        <form id="formLogin" onsubmit="app.actions.handleLogin(event)" novalidate>
           <div class="mb-3">
-            <label class="form-label fw-bold text-secondary" for="loginUser">Usuario</label>
-            <input type="text" class="form-control form-control-lg" id="loginUser" autocomplete="username" required maxlength="50" placeholder="Ej: TB01">
+            <label class="form-label fw-bold text-secondary" for="inputUser">Usuario</label>
+            <input type="text" class="form-control form-control-lg" id="inputUser" autocomplete="username" required maxlength="50" placeholder="Ej: TB01">
           </div>
           <div class="mb-4">
-            <label class="form-label fw-bold text-secondary" for="loginPass">Contraseña</label>
-            <input type="password" class="form-control form-control-lg" id="loginPass" autocomplete="current-password" required maxlength="100" placeholder="••••••••">
+            <label class="form-label fw-bold text-secondary" for="inputPass">Contraseña</label>
+            <input type="password" class="form-control form-control-lg" id="inputPass" autocomplete="current-password" required maxlength="100" placeholder="••••••••">
           </div>
-          <div class="alert alert-danger d-none" id="loginAlert" role="alert"></div>
-          <button type="submit" class="btn btn-primary-custom w-100 py-2 text-white fs-5" id="btnLoginSubmit">Iniciar Sesión</button>
+          <div class="alert alert-danger d-none" id="alertLogin" role="alert"></div>
+          <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnLoginSubmit">
+            Iniciar Sesión
+          </button>
         </form>
       </div>
     </div>
 
-    <!-- VISTA FORMULARIO INTERVENCIÓN -->
-    <div class="card card-custom d-none" id="viewForm">
+    <!-- PANTALLA: FORMULARIO PRINCIPAL -->
+    <div class="card card-custom d-none" id="viewMain">
       <div class="header-box d-flex justify-content-between align-items-center">
         <div>
-          <h5 class="mb-0 text-white"><i class="bi bi-tools me-2"></i>Parte de Mantenimiento</h5>
-          <small class="text-white-50" id="userBadge"></small>
+          <h5 class="mb-0 text-white"><i class="bi bi-clipboard2-pulse-fill text-info me-2"></i>Parte de Mantenimiento</h5>
+          <small class="text-white-50" id="labelTecnicoSesion">Técnico Conectado</small>
         </div>
-        <button class="btn btn-sm btn-outline-light" type="button" onclick="handleLogout()"><i class="bi bi-box-arrow-right"></i> Salir</button>
+        <button class="btn btn-sm btn-outline-light" type="button" onclick="app.actions.handleLogout()" aria-label="Cerrar sesión">
+          <i class="bi bi-box-arrow-right me-1"></i>Salir
+        </button>
       </div>
 
       <div class="card-body p-4">
-        <div class="alert alert-danger d-none" id="formAlert" role="alert"></div>
+        <div class="alert alert-danger d-none" id="alertForm" role="alert"></div>
+        <div class="alert alert-success d-none" id="alertSuccess" role="alert"></div>
 
-        <form id="formIntervencion" onsubmit="handleGuardarIntervencion(event)">
+        <form id="formIntervencion" onsubmit="app.actions.handleGuardar(event)" novalidate>
           
           <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="fechaMantenimiento">Fecha de Intervención *</label>
-              <input type="date" class="form-control" id="fechaMantenimiento" required>
+              <label class="form-label fw-bold text-secondary" for="txtFecha">Fecha de Intervención *</label>
+              <input type="date" class="form-control" id="txtFecha" required>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="tecnicoNombre">Técnico Responsable</label>
-              <input type="text" class="form-control bg-light" id="tecnicoNombre" readonly>
+              <label class="form-label fw-bold text-secondary" for="txtTecnicoNombre">Técnico Asignado</label>
+              <input type="text" class="form-control bg-light" id="txtTecnicoNombre" readonly>
             </div>
           </div>
 
-          <!-- SELECTORES EN CASCADA -->
+          <!-- SELECTORES CASCADA -->
           <div class="p-3 bg-light rounded-3 mb-3 border">
             <div class="mb-3">
               <label class="form-label fw-bold text-dark" for="selEmpresa">1. Empresa (Cliente) *</label>
-              <select class="form-select" id="selEmpresa" onchange="onEmpresaChange()" required>
+              <select class="form-select" id="selEmpresa" onchange="app.handlers.onEmpresaChange()" required>
                 <option value="">-- Seleccionar Empresa --</option>
               </select>
             </div>
 
             <div class="mb-3">
-              <label class="form-label fw-bold text-dark" for="selLocal">2. Local *</label>
-              <select class="form-select" id="selLocal" onchange="onLocalChange()" required disabled>
+              <label class="form-label fw-bold text-dark" for="selLocal">2. Local / Sede *</label>
+              <select class="form-select" id="selLocal" onchange="app.handlers.onLocalChange()" required disabled>
                 <option value="">-- Seleccionar Local --</option>
               </select>
             </div>
@@ -93,29 +179,29 @@
             <div class="row g-2">
               <div class="col-md-8">
                 <label class="form-label fw-bold text-dark" for="selEquipo">3. ID / Nº Serie Equipo *</label>
-                <select class="form-select" id="selEquipo" onchange="onEquipoChange()" required disabled>
+                <select class="form-select" id="selEquipo" onchange="app.handlers.onEquipoChange()" required disabled>
                   <option value="">-- Seleccionar Equipo --</option>
                 </select>
               </div>
               <div class="col-md-4">
-                <label class="form-label fw-bold text-secondary" for="txtModelo">Modelo</label>
-                <input type="text" class="form-control bg-white" id="txtModelo" readonly placeholder="-">
+                <label class="form-label fw-bold text-secondary" for="txtModeloEquipo">Modelo</label>
+                <input type="text" class="form-control bg-white" id="txtModeloEquipo" readonly placeholder="-">
               </div>
             </div>
           </div>
 
           <div class="row g-3 mb-3">
             <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="tipoMantenimiento">Tipo de Mantenimiento *</label>
-              <select class="form-select" id="tipoMantenimiento" required>
+              <label class="form-label fw-bold text-secondary" for="selTipoMant">Tipo de Mantenimiento *</label>
+              <select class="form-select" id="selTipoMant" required>
                 <option value="Programado">Programado</option>
                 <option value="Reparacion">Reparación</option>
                 <option value="Instalacion">Instalación</option>
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="estadoFinal">Estado Final del Equipo *</label>
-              <select class="form-select" id="estadoFinal" required>
+              <label class="form-label fw-bold text-secondary" for="selEstadoFinal">Estado Final del Equipo *</label>
+              <select class="form-select" id="selEstadoFinal" required>
                 <option value="Operativo">Operativo</option>
                 <option value="Operativo con restricciones">Operativo con restricciones</option>
                 <option value="Fuera de servicio">Fuera de servicio</option>
@@ -125,37 +211,50 @@
           </div>
 
           <div class="mb-3">
-            <label class="form-label fw-bold text-secondary" for="descripcion">Descripción de las actividades realizadas *</label>
-            <textarea class="form-control" id="descripcion" rows="3" required maxlength="2000" placeholder="Detalle técnico de la actuación..."></textarea>
+            <label class="form-label fw-bold text-secondary" for="taDescripcion">Descripción del Trabajo Realizado *</label>
+            <textarea class="form-control" id="taDescripcion" rows="3" required maxlength="2000" placeholder="Detalle técnico de tareas realizadas, pruebas y repuestos instalados..."></textarea>
           </div>
 
           <div class="mb-4">
-            <label class="form-label fw-bold text-secondary" for="observaciones">Observaciones / Acciones pendientes</label>
-            <textarea class="form-control" id="observaciones" rows="2" maxlength="2000" placeholder="Materiales necesarios, notas adicionales..."></textarea>
+            <label class="form-label fw-bold text-secondary" for="taObservaciones">Observaciones / Pendientes</label>
+            <textarea class="form-control" id="taObservaciones" rows="2" maxlength="2000" placeholder="Notas adicionales o requerimientos para la próxima visita..."></textarea>
           </div>
 
-          <!-- FOTOGRAFÍAS -->
+          <!-- MÓDULO DE FOTOGRAFÍAS -->
           <div class="row g-3 mb-4">
+            <!-- Foto 1: Equipo -->
             <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="fileEquipo"><i class="bi bi-camera me-1"></i>Foto Equipo Terminado</label>
-              <input type="file" class="form-control mb-2" id="fileEquipo" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="procesarYPrevisualizar(this, 'imgEquipoPreview', 'txtEquipoPlaceholder')">
-              <div class="preview-box">
-                <img id="imgEquipoPreview" src="" class="d-none" alt="Vista previa equipo">
-                <span class="text-muted small" id="txtEquipoPlaceholder">Sin captura</span>
+              <label class="form-label fw-bold text-secondary" for="fileFotoEquipo">
+                <i class="bi bi-camera-fill me-1 text-primary"></i>Foto Equipo Terminado
+              </label>
+              <input type="file" class="form-control mb-2" id="fileFotoEquipo" 
+                     accept="image/jpeg,image/png,image/webp" capture="environment"
+                     onchange="app.handlers.onFotoSelected(this, 'equipo')">
+              <div class="preview-container" id="boxPreviewEquipo">
+                <img id="imgPreviewEquipo" class="d-none" alt="Vista previa del equipo">
+                <span class="text-muted small" id="lblPlaceholderEquipo"><i class="bi bi-image me-1"></i>Sin captura</span>
               </div>
+              <span class="img-meta-badge text-muted text-center" id="metaEquipo"></span>
             </div>
+
+            <!-- Foto 2: Albarán -->
             <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="fileAlbaran"><i class="bi bi-file-earmark-image me-1"></i>Foto Albarán de Visita</label>
-              <input type="file" class="form-control mb-2" id="fileAlbaran" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="procesarYPrevisualizar(this, 'imgAlbaranPreview', 'txtAlbaranPlaceholder')">
-              <div class="preview-box">
-                <img id="imgAlbaranPreview" src="" class="d-none" alt="Vista previa albarán">
-                <span class="text-muted small" id="txtAlbaranPlaceholder">Sin captura</span>
+              <label class="form-label fw-bold text-secondary" for="fileFotoAlbaran">
+                <i class="bi bi-file-earmark-image-fill me-1 text-primary"></i>Foto Albarán Firmado
+              </label>
+              <input type="file" class="form-control mb-2" id="fileFotoAlbaran" 
+                     accept="image/jpeg,image/png,image/webp" capture="environment"
+                     onchange="app.handlers.onFotoSelected(this, 'albaran')">
+              <div class="preview-container" id="boxPreviewAlbaran">
+                <img id="imgPreviewAlbaran" class="d-none" alt="Vista previa del albarán">
+                <span class="text-muted small" id="lblPlaceholderAlbaran"><i class="bi bi-image me-1"></i>Sin captura</span>
               </div>
+              <span class="img-meta-badge text-muted text-center" id="metaAlbaran"></span>
             </div>
           </div>
 
-          <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnSubmit">
-            <i class="bi bi-cloud-arrow-up me-2"></i>Registrar Intervención
+          <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnGuardarIntervencion">
+            <i class="bi bi-cloud-check-fill me-2"></i>Registrar Intervención
           </button>
         </form>
       </div>
@@ -164,285 +263,447 @@
   </div>
 
   <script>
-    // URL DE LA API EN APPS SCRIPT
-    const API_URL = "https://script.google.com/macros/s/AKfycbzdSUDGKeMEDcHZYOjLVVmMJags-nkafa9RnH5tOR_6QM_EBgR5nA72j8Y1T8-O5W6G/exec";
+    /**
+     * MOTOR CLIENTE BIOKAN - SINGLE OBJECT NAMESPACE
+     */
+    const app = {
+      config: {
+        // ACTUALIZAR AQUÍ CON LA URL DE DESPLIEGUE FINAL /exec
+        apiUrl: "https://script.google.com/macros/s/AKfycbzdSUDGKeMEDcHZYOjLVVmMJags-nkafa9RnH5tOR_6QM_EBgR5nA72j8Y1T8-O5W6G/exec",
+        version: "2.1.0",
+        maxFileRawBytes: 12582912, // 12 MB entrada
+        maxFinalBytes: 819200,      // 800 KB objetivo salida
+        timeoutMs: 50000            // 50 segundos timeout fetch
+      },
 
-    let dbRutas = {};
-
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('fechaMantenimiento').valueAsDate = new Date();
-      verificarSesionExistente();
-    });
-
-    function setLoader(show, text = 'Cargando...') {
-      const loader = document.getElementById('loader');
-      document.getElementById('loaderText').textContent = text;
-      loader.style.display = show ? 'flex' : 'none';
-    }
-
-    function mostrarAlerta(elemId, msg) {
-      const el = document.getElementById(elemId);
-      if (msg) {
-        el.textContent = msg;
-        el.classList.remove('d-none');
-      } else {
-        el.textContent = '';
-        el.classList.add('d-none');
-      }
-    }
-
-    // Comunicación directa con Apps Script mediante fetch
-    async function llamarAPI(accion, payloadExtra = {}) {
-      try {
-        const bodyData = JSON.stringify({ accion: accion, ...payloadExtra });
-        const res = await fetch(API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'text/plain;charset=utf-8',
-          },
-          body: bodyData,
-          redirect: 'follow'
-        });
-        return await res.json();
-      } catch (err) {
-        console.error('Error de red API:', err);
-        return { success: false, error: 'Error de comunicación con el servidor.' };
-      }
-    }
-
-    function verificarSesionExistente() {
-      const token = sessionStorage.getItem('AUTH_TOKEN');
-      const tecnico = sessionStorage.getItem('AUTH_TECNICO');
-      if (token && tecnico) {
-        document.getElementById('tecnicoNombre').value = tecnico;
-        document.getElementById('userBadge').textContent = tecnico;
-        cargarRutas(token);
-      }
-    }
-
-    async function handleLogin(e) {
-      e.preventDefault();
-      const u = document.getElementById('loginUser').value.trim();
-      const p = document.getElementById('loginPass').value.trim();
-      
-      mostrarAlerta('loginAlert', null);
-      setLoader(true, 'Verificando credenciales...');
-      document.getElementById('btnLoginSubmit').disabled = true;
-
-      const res = await llamarAPI('login', { usuario: u, clave: p });
-      
-      setLoader(false);
-      document.getElementById('btnLoginSubmit').disabled = false;
-
-      if (res.success) {
-        sessionStorage.setItem('AUTH_TOKEN', res.token);
-        sessionStorage.setItem('AUTH_TECNICO', res.tecnico);
-        document.getElementById('tecnicoNombre').value = res.tecnico;
-        document.getElementById('userBadge').textContent = res.tecnico;
-        document.getElementById('loginPass').value = '';
-        cargarRutas(res.token);
-      } else {
-        mostrarAlerta('loginAlert', res.error || 'Credenciales inválidas.');
-      }
-    }
-
-    async function handleLogout() {
-      const token = sessionStorage.getItem('AUTH_TOKEN');
-      setLoader(true, 'Cerrando sesión...');
-      sessionStorage.clear();
-      await llamarAPI('logout', { token: token });
-      location.reload();
-    }
-
-    function sesionExpirada() {
-      sessionStorage.clear();
-      alert('Su sesión ha caducado. Por favor, inicie sesión nuevamente.');
-      location.reload();
-    }
-
-    async function cargarRutas(token) {
-      setLoader(true, 'Cargando datos de planificación...');
-      const res = await llamarAPI('obtenerEquipos', { token: token });
-      setLoader(false);
-
-      if (res.sessionExpired) {
-        sesionExpirada();
-        return;
-      }
-
-      if (res.success) {
-        dbRutas = res.datos || {};
-        poblarEmpresas();
-        document.getElementById('viewLogin').classList.add('d-none');
-        document.getElementById('viewForm').classList.remove('d-none');
-      } else {
-        mostrarAlerta('formAlert', res.error || 'No se pudieron obtener las rutas.');
-      }
-    }
-
-    function limpiarSelect(selectElement, defaultText) {
-      while (selectElement.firstChild) selectElement.removeChild(selectElement.firstChild);
-      const defaultOpt = document.createElement('option');
-      defaultOpt.value = '';
-      defaultOpt.textContent = defaultText;
-      selectElement.appendChild(defaultOpt);
-    }
-
-    function poblarEmpresas() {
-      const sel = document.getElementById('selEmpresa');
-      limpiarSelect(sel, '-- Seleccionar Empresa --');
-      Object.keys(dbRutas).sort().forEach(empresa => {
-        const opt = document.createElement('option');
-        opt.value = empresa;
-        opt.textContent = empresa;
-        sel.appendChild(opt);
-      });
-    }
-
-    function onEmpresaChange() {
-      const empresa = document.getElementById('selEmpresa').value;
-      const selLocal = document.getElementById('selLocal');
-      const selEquipo = document.getElementById('selEquipo');
-      document.getElementById('txtModelo').value = '';
-
-      limpiarSelect(selLocal, '-- Seleccionar Local --');
-      limpiarSelect(selEquipo, '-- Seleccionar Equipo --');
-      selEquipo.disabled = true;
-
-      if (empresa && dbRutas[empresa]) {
-        Object.keys(dbRutas[empresa]).sort().forEach(local => {
-          const opt = document.createElement('option');
-          opt.value = local;
-          opt.textContent = local;
-          selLocal.appendChild(opt);
-        });
-        selLocal.disabled = false;
-      } else {
-        selLocal.disabled = true;
-      }
-    }
-
-    function onLocalChange() {
-      const empresa = document.getElementById('selEmpresa').value;
-      const local = document.getElementById('selLocal').value;
-      const selEquipo = document.getElementById('selEquipo');
-      document.getElementById('txtModelo').value = '';
-
-      limpiarSelect(selEquipo, '-- Seleccionar Equipo --');
-
-      if (empresa && local && dbRutas[empresa][local]) {
-        dbRutas[empresa][local].forEach(eq => {
-          const opt = document.createElement('option');
-          opt.value = eq.idEquipo;
-          opt.textContent = eq.idEquipo + ' (' + eq.modelo + ')';
-          opt.setAttribute('data-modelo', eq.modelo);
-          selEquipo.appendChild(opt);
-        });
-        selEquipo.disabled = false;
-      } else {
-        selEquipo.disabled = true;
-      }
-    }
-
-    function onEquipoChange() {
-      const selEquipo = document.getElementById('selEquipo');
-      const opt = selEquipo.options[selEquipo.selectedIndex];
-      document.getElementById('txtModelo').value = opt ? opt.getAttribute('data-modelo') : '';
-    }
-
-    function procesarYPrevisualizar(input, imgPreviewId, placeholderId) {
-      const file = input.files[0];
-      const preview = document.getElementById(imgPreviewId);
-      const placeholder = document.getElementById(placeholderId);
-
-      if (file) {
-        if (file.size > 5242880) {
-          alert('El archivo supera el límite de 5 MB.');
-          input.value = '';
-          preview.classList.add('d-none');
-          placeholder.classList.remove('d-none');
-          return;
+      state: {
+        token: null,
+        tecnico: null,
+        usuario: null,
+        dbRutas: {},
+        currentIdempotencyKey: null,
+        fotos: {
+          equipo: { base64: '', bytes: 0 },
+          albaran: { base64: '', bytes: 0 }
         }
+      },
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          preview.src = e.target.result;
-          preview.classList.remove('d-none');
-          placeholder.classList.add('d-none');
-        };
-        reader.readAsDataURL(file);
+      ui: {
+        setLoader(show, mainText = 'Cargando...', subText = 'Por favor, espere') {
+          const el = document.getElementById('loaderOverlay');
+          document.getElementById('loaderStatusText').textContent = mainText;
+          document.getElementById('loaderSubText').textContent = subText;
+          el.style.display = show ? 'flex' : 'none';
+        },
+
+        showAlert(elementId, msg) {
+          const el = document.getElementById(elementId);
+          if (msg) {
+            el.textContent = msg;
+            el.classList.remove('d-none');
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          } else {
+            el.textContent = '';
+            el.classList.add('d-none');
+          }
+        },
+
+        limpiarSelect(selectElem, defaultTxt) {
+          while (selectElem.firstChild) selectElem.removeChild(selectElem.firstChild);
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = defaultTxt;
+          selectElem.appendChild(opt);
+        }
+      },
+
+      // MÓDULO DE COMPRESIÓN PROGRESIVA CON CANVAS
+      imgEngine: {
+        async comprimirImagen(file) {
+          if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+            throw new Error('Tipo de archivo no permitido. Seleccione JPEG, PNG o WebP.');
+          }
+
+          if (file.size > app.config.maxFileRawBytes) {
+            throw new Error(`El archivo original es demasiado grande (${(file.size / 1048576).toFixed(1)} MB). Máximo permitido: 12 MB.`);
+          }
+
+          const originalSizeKb = Math.round(file.size / 1024);
+          const imageBitmap = await createImageBitmap(file);
+
+          let maxDim = 1600;
+          let calidad = 0.78;
+          let width = imageBitmap.width;
+          let height = imageBitmap.height;
+
+          // Ajuste de proporciones inicial
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d', { alpha: false });
+          canvas.width = width;
+          canvas.height = height;
+          ctx.drawImage(imageBitmap, 0, 0, width, height);
+
+          // Bucle de degradación controlada (máximo 4 iteraciones para evitar bloqueos)
+          let blob = null;
+          for (let intento = 0; intento < 4; intento++) {
+            blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', calidad));
+            if (blob.size <= app.config.maxFinalBytes || calidad <= 0.45) {
+              break;
+            }
+            calidad -= 0.12;
+            if (blob.size > app.config.maxFinalBytes * 1.5) {
+              canvas.width = Math.round(canvas.width * 0.85);
+              canvas.height = Math.round(canvas.height * 0.85);
+              ctx.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
+            }
+          }
+
+          // Liberación de recursos
+          imageBitmap.close();
+
+          if (!blob || blob.size > app.config.maxFinalBytes) {
+            throw new Error('No fue posible comprimir la imagen por debajo del límite seguro de 800 KB.');
+          }
+
+          const finalSizeKb = Math.round(blob.size / 1024);
+          const base64 = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.readAsDataURL(blob);
+          });
+
+          return {
+            base64: base64,
+            bytes: blob.size,
+            metaString: `${originalSizeKb} KB ➔ ${finalSizeKb} KB`
+          };
+        }
+      },
+
+      // MOTOR DE COMUNICACIÓN CON REINTENTOS Y BACKOFF EXPONENCIAL
+      api: {
+        async request(accion, payloadExtra = {}, maxRetries = 2) {
+          const bodyData = JSON.stringify({ accion: accion, ...payloadExtra });
+          let delay = 1500;
+
+          for (let intento = 0; intento <= maxRetries; intento++) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), app.config.timeoutMs);
+
+            try {
+              const res = await fetch(app.config.apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: bodyData,
+                redirect: 'follow',
+                signal: controller.signal
+              });
+
+              clearTimeout(timeoutId);
+
+              if (!res.ok) {
+                throw new Error(`HTTP Error ${res.status}`);
+              }
+
+              const json = await res.json();
+              return json;
+
+            } catch (err) {
+              clearTimeout(timeoutId);
+              const isLast = intento === maxRetries;
+
+              if (isLast) {
+                if (err.name === 'AbortError') {
+                  return { success: false, error: 'Tiempo de espera agotado. Verifique su conexión y reintente.', code: 'ERR_TIMEOUT' };
+                }
+                return { success: false, error: 'Error de comunicación persistente con el servidor.', code: 'ERR_NETWORK' };
+              }
+
+              // Espera progresiva antes del reintento
+              await new Promise(r => setTimeout(r, delay));
+              delay *= 2;
+            }
+          }
+        }
+      },
+
+      // CONTROLADORES DE EVENTOS
+      handlers: {
+        async onFotoSelected(input, tipo) {
+          const file = input.files[0];
+          const previewImg = document.getElementById(tipo === 'equipo' ? 'imgPreviewEquipo' : 'imgPreviewAlbaran');
+          const placeholder = document.getElementById(tipo === 'equipo' ? 'lblPlaceholderEquipo' : 'lblPlaceholderAlbaran');
+          const metaBadge = document.getElementById(tipo === 'equipo' ? 'metaEquipo' : 'metaAlbaran');
+
+          if (!file) {
+            app.state.fotos[tipo] = { base64: '', bytes: 0 };
+            previewImg.src = '';
+            previewImg.classList.add('d-none');
+            placeholder.classList.remove('d-none');
+            metaBadge.textContent = '';
+            return;
+          }
+
+          app.ui.setLoader(true, 'Comprimiendo imagen...', 'Optimizando resolución para transmisión rápida');
+
+          try {
+            const result = await app.imgEngine.comprimirImagen(file);
+            app.state.fotos[tipo] = { base64: result.base64, bytes: result.bytes };
+
+            previewImg.src = result.base64;
+            previewImg.classList.remove('d-none');
+            placeholder.classList.add('d-none');
+            metaBadge.textContent = `Optimizado: ${result.metaString}`;
+            metaBadge.className = 'img-meta-badge text-success text-center';
+
+          } catch (err) {
+            input.value = '';
+            app.state.fotos[tipo] = { base64: '', bytes: 0 };
+            previewImg.classList.add('d-none');
+            placeholder.classList.remove('d-none');
+            metaBadge.textContent = 'Error de compresión';
+            metaBadge.className = 'img-meta-badge text-danger text-center';
+            alert(err.message || 'Error al procesar la fotografía.');
+          } finally {
+            app.ui.setLoader(false);
+          }
+        },
+
+        onEmpresaChange() {
+          const empresa = document.getElementById('selEmpresa').value;
+          const selLocal = document.getElementById('selLocal');
+          const selEquipo = document.getElementById('selEquipo');
+          document.getElementById('txtModeloEquipo').value = '';
+
+          app.ui.limpiarSelect(selLocal, '-- Seleccionar Local --');
+          app.ui.limpiarSelect(selEquipo, '-- Seleccionar Equipo --');
+          selEquipo.disabled = true;
+
+          if (empresa && app.state.dbRutas[empresa]) {
+            Object.keys(app.state.dbRutas[empresa]).sort().forEach(loc => {
+              const opt = document.createElement('option');
+              opt.value = loc;
+              opt.textContent = loc;
+              selLocal.appendChild(opt);
+            });
+            selLocal.disabled = false;
+          } else {
+            selLocal.disabled = true;
+          }
+        },
+
+        onLocalChange() {
+          const empresa = document.getElementById('selEmpresa').value;
+          const local = document.getElementById('selLocal').value;
+          const selEquipo = document.getElementById('selEquipo');
+          document.getElementById('txtModeloEquipo').value = '';
+
+          app.ui.limpiarSelect(selEquipo, '-- Seleccionar Equipo --');
+
+          if (empresa && local && app.state.dbRutas[empresa][local]) {
+            app.state.dbRutas[empresa][local].forEach(eq => {
+              const opt = document.createElement('option');
+              opt.value = eq.idEquipo;
+              opt.textContent = `${eq.idEquipo} (${eq.modelo})`;
+              opt.setAttribute('data-modelo', eq.modelo);
+              selEquipo.appendChild(opt);
+            });
+            selEquipo.disabled = false;
+          } else {
+            selEquipo.disabled = true;
+          }
+        },
+
+        onEquipoChange() {
+          const sel = document.getElementById('selEquipo');
+          const opt = sel.options[sel.selectedIndex];
+          document.getElementById('txtModeloEquipo').value = opt ? (opt.getAttribute('data-modelo') || '') : '';
+        }
+      },
+
+      // ACCIONES DE NEGOCIO
+      actions: {
+        async handleLogin(e) {
+          e.preventDefault();
+          const u = document.getElementById('inputUser').value.trim();
+          const p = document.getElementById('inputPass').value.trim();
+
+          app.ui.showAlert('alertLogin', null);
+          if (!u || !p) {
+            app.ui.showAlert('alertLogin', 'Ingrese su usuario y contraseña.');
+            return;
+          }
+
+          app.ui.setLoader(true, 'Autenticando...', 'Verificando credenciales de acceso');
+          document.getElementById('btnLoginSubmit').disabled = true;
+
+          const res = await app.api.request('login', { usuario: u, clave: p });
+          app.ui.setLoader(false);
+          document.getElementById('btnLoginSubmit').disabled = false;
+
+          if (res.success) {
+            app.state.token = res.token;
+            app.state.tecnico = res.tecnico;
+            app.state.usuario = res.usuario;
+
+            sessionStorage.setItem('BK_AUTH_TOKEN', res.token);
+            sessionStorage.setItem('BK_AUTH_TECNICO', res.tecnico);
+            sessionStorage.setItem('BK_AUTH_USER', res.usuario);
+
+            document.getElementById('inputPass').value = '';
+            app.actions.iniciarSesionUI();
+          } else {
+            app.ui.showAlert('alertLogin', res.error || 'Credenciales incorrectas.');
+          }
+        },
+
+        async handleLogout() {
+          if (app.state.token) {
+            app.ui.setLoader(true, 'Cerrando sesión...', 'Finalizando sesión de forma segura');
+            await app.api.request('logout', { token: app.state.token });
+          }
+          sessionStorage.clear();
+          location.reload();
+        },
+
+        async iniciarSesionUI() {
+          document.getElementById('txtTecnicoNombre').value = app.state.tecnico;
+          document.getElementById('labelTecnicoSesion').textContent = `${app.state.tecnico} (${app.state.usuario})`;
+          document.getElementById('viewLogin').classList.add('d-none');
+          document.getElementById('viewMain').classList.remove('d-none');
+
+          await app.actions.cargarRutas();
+        },
+
+        async cargarRutas() {
+          app.ui.setLoader(true, 'Cargando rutas...', 'Sincronizando clientes y equipos');
+          const res = await app.api.request('obtenerEquipos', { token: app.state.token });
+          app.ui.setLoader(false);
+
+          if (res.sessionExpired) {
+            alert('Su sesión ha expirado.');
+            app.actions.handleLogout();
+            return;
+          }
+
+          if (res.success) {
+            app.state.dbRutas = res.datos || {};
+            const selEmpresa = document.getElementById('selEmpresa');
+            app.ui.limpiarSelect(selEmpresa, '-- Seleccionar Empresa --');
+
+            Object.keys(app.state.dbRutas).sort().forEach(emp => {
+              const opt = document.createElement('option');
+              opt.value = emp;
+              opt.textContent = emp;
+              selEmpresa.appendChild(opt);
+            });
+          } else {
+            app.ui.showAlert('alertForm', res.error || 'Error cargando las rutas.');
+          }
+        },
+
+        generarNuevaIdempotencia() {
+          const array = new Uint8Array(16);
+          crypto.getRandomValues(array);
+          app.state.currentIdempotencyKey = 'IDEM_' + Array.from(array, b => ('0' + b.toString(16)).slice(-2)).join('');
+        },
+
+        async handleGuardar(event) {
+          event.preventDefault();
+          app.ui.showAlert('alertForm', null);
+          app.ui.showAlert('alertSuccess', null);
+
+          if (!app.state.currentIdempotencyKey) {
+            app.actions.generarNuevaIdempotencia();
+          }
+
+          const btn = document.getElementById('btnGuardarIntervencion');
+          btn.disabled = true;
+          app.ui.setLoader(true, 'Registrando intervención...', 'Transmitiendo datos técnicos a Google Cloud');
+
+          const payload = {
+            idempotencyKey: app.state.currentIdempotencyKey,
+            fechaMantenimiento: document.getElementById('txtFecha').value,
+            empresa: document.getElementById('selEmpresa').value,
+            local: document.getElementById('selLocal').value,
+            idEquipo: document.getElementById('selEquipo').value,
+            tipoMantenimiento: document.getElementById('selTipoMant').value,
+            estadoFinal: document.getElementById('selEstadoFinal').value,
+            descripcion: document.getElementById('taDescripcion').value,
+            observaciones: document.getElementById('taObservaciones').value,
+            fotoEquipoBase64: app.state.fotos.equipo.base64,
+            fotoAlbaranBase64: app.state.fotos.albaran.base64
+          };
+
+          const res = await app.api.request('registrarIntervencion', {
+            token: app.state.token,
+            payload: payload
+          });
+
+          app.ui.setLoader(false);
+          btn.disabled = false;
+
+          if (res.sessionExpired) {
+            alert('Su sesión ha caducado durante el envío. Inicie sesión nuevamente.');
+            app.actions.handleLogout();
+            return;
+          }
+
+          if (res.success) {
+            const idInt = res.idIntervencion || 'OK';
+            app.ui.showAlert('alertSuccess', `¡Intervención registrada exitosamente! ID: ${idInt}`);
+            
+            // Limpieza completa tras confirmación positiva
+            document.getElementById('formIntervencion').reset();
+            document.getElementById('txtFecha').valueAsDate = new Date();
+            document.getElementById('txtTecnicoNombre').value = app.state.tecnico;
+            document.getElementById('selLocal').disabled = true;
+            document.getElementById('selEquipo').disabled = true;
+
+            ['equipo', 'albaran'].forEach(tipo => {
+              app.state.fotos[tipo] = { base64: '', bytes: 0 };
+              const prev = document.getElementById(tipo === 'equipo' ? 'imgPreviewEquipo' : 'imgPreviewAlbaran');
+              const ph = document.getElementById(tipo === 'equipo' ? 'lblPlaceholderEquipo' : 'lblPlaceholderAlbaran');
+              const mb = document.getElementById(tipo === 'equipo' ? 'metaEquipo' : 'metaAlbaran');
+              prev.src = '';
+              prev.classList.add('d-none');
+              ph.classList.remove('d-none');
+              mb.textContent = '';
+            });
+
+            app.state.currentIdempotencyKey = null; // Reiniciar clave solo tras éxito
+          } else {
+            app.ui.showAlert('alertForm', res.error || 'No se pudo guardar la intervención.');
+          }
+        },
+
+        init() {
+          document.getElementById('txtFecha').valueAsDate = new Date();
+          const token = sessionStorage.getItem('BK_AUTH_TOKEN');
+          const tec = sessionStorage.getItem('BK_AUTH_TECNICO');
+          const usr = sessionStorage.getItem('BK_AUTH_USER');
+
+          if (token && tec && usr) {
+            app.state.token = token;
+            app.state.tecnico = tec;
+            app.state.usuario = usr;
+            app.actions.iniciarSesionUI();
+          }
+        }
       }
-    }
+    };
 
-    function leerArchivoBase64(inputElement) {
-      return new Promise((resolve) => {
-        const file = inputElement.files[0];
-        if (!file) return resolve('');
-        const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
-      });
-    }
-
-    function generarClaveIdempotencia() {
-      return 'IDEM_' + Date.now() + '_' + Math.random().toString(36).substring(2, 11);
-    }
-
-    async function handleGuardarIntervencion(e) {
-      e.preventDefault();
-      const token = sessionStorage.getItem('AUTH_TOKEN');
-      if (!token) {
-        sesionExpirada();
-        return;
-      }
-
-      mostrarAlerta('formAlert', null);
-      const btnSubmit = document.getElementById('btnSubmit');
-      btnSubmit.disabled = true;
-      setLoader(true, 'Guardando intervención...');
-
-      const fotoEquipoBase64 = await leerArchivoBase64(document.getElementById('fileEquipo'));
-      const fotoAlbaranBase64 = await leerArchivoBase64(document.getElementById('fileAlbaran'));
-
-      const payload = {
-        idempotencyKey: generarClaveIdempotencia(),
-        fechaMantenimiento: document.getElementById('fechaMantenimiento').value,
-        empresa: document.getElementById('selEmpresa').value,
-        local: document.getElementById('selLocal').value,
-        idEquipo: document.getElementById('selEquipo').value,
-        tipoMantenimiento: document.getElementById('tipoMantenimiento').value,
-        estadoFinal: document.getElementById('estadoFinal').value,
-        descripcion: document.getElementById('descripcion').value,
-        observaciones: document.getElementById('observaciones').value,
-        fotoEquipoBase64: fotoEquipoBase64,
-        fotoAlbaranBase64: fotoAlbaranBase64
-      };
-
-      const res = await llamarAPI('registrarIntervencion', { token: token, payload: payload });
-      
-      setLoader(false);
-      btnSubmit.disabled = false;
-
-      if (res.sessionExpired) {
-        sesionExpirada();
-        return;
-      }
-
-      if (res.success) {
-        alert('¡Intervención registrada correctamente!');
-        document.getElementById('formIntervencion').reset();
-        document.getElementById('fechaMantenimiento').valueAsDate = new Date();
-        document.getElementById('selLocal').disabled = true;
-        document.getElementById('selEquipo').disabled = true;
-        document.getElementById('imgEquipoPreview').classList.add('d-none');
-        document.getElementById('imgAlbaranPreview').classList.add('d-none');
-        document.getElementById('txtEquipoPlaceholder').classList.remove('d-none');
-        document.getElementById('txtAlbaranPlaceholder').classList.remove('d-none');
-      } else {
-        mostrarAlerta('formAlert', res.error || 'No se pudo guardar la intervención.');
-      }
-    }
+    document.addEventListener('DOMContentLoaded', app.actions.init);
   </script>
 </body>
 </html>
