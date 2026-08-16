@@ -165,7 +165,7 @@
 
   <script>
     // URL DE LA API EN APPS SCRIPT
-    const API_URL = "https://script.google.com/macros/s/AKfycbwym5gdXUt0PIKAaCMyHvAzH_M-XzjDksAZZFSoNJeGgaLGGGcyM707TA5NejJJxoYh/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbzdSUDGKeMEDcHZYOjLVVmMJags-nkafa9RnH5tOR_6QM_EBgR5nA72j8Y1T8-O5W6G/exec";
 
     let dbRutas = {};
 
@@ -191,13 +191,17 @@
       }
     }
 
-    // Comunicación directa con Apps Script mediante fetch (sin cuentas de Google)
+    // Comunicación directa con Apps Script mediante fetch
     async function llamarAPI(accion, payloadExtra = {}) {
       try {
         const bodyData = JSON.stringify({ accion: accion, ...payloadExtra });
         const res = await fetch(API_URL, {
           method: 'POST',
-          body: bodyData
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8',
+          },
+          body: bodyData,
+          redirect: 'follow'
         });
         return await res.json();
       } catch (err) {
