@@ -222,38 +222,38 @@
             <textarea class="form-control" id="taObservaciones" rows="2" maxlength="2000" placeholder="Notas adicionales o requerimientos para la próxima visita..."></textarea>
           </div>
 
-          <!-- MÓDULO DE FOTOGRAFÍAS -->
-          <div class="row g-3 mb-4">
-            <!-- Foto 1: Equipo -->
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="fileFotoEquipo">
-                <i class="bi bi-camera-fill me-1 text-primary"></i>Foto Equipo Terminado
-              </label>
-              <input type="file" class="form-control mb-2" id="fileFotoEquipo" 
-                     accept="image/jpeg,image/png,image/webp" capture="environment"
-                     onchange="app.handlers.onFotoSelected(this, 'equipo')">
-              <div class="preview-container" id="boxPreviewEquipo">
-                <img id="imgPreviewEquipo" class="d-none" alt="Vista previa del equipo">
-                <span class="text-muted small" id="lblPlaceholderEquipo"><i class="bi bi-image me-1"></i>Sin captura</span>
-              </div>
-              <span class="img-meta-badge text-muted text-center" id="metaEquipo"></span>
-            </div>
+<!-- FOTOGRAFÍAS -->
+<div class="row g-3 mb-4">
+  <!-- Foto 1: Equipo -->
+  <div class="col-md-6">
+    <label class="form-label fw-bold text-secondary" for="fileFotoEquipo">
+      <i class="bi bi-camera-fill me-1 text-primary"></i>Foto Equipo Terminado
+    </label>
+    <input type="file" class="form-control mb-2" id="fileFotoEquipo" 
+           accept="image/jpeg,image/png,image/webp"
+           onchange="app.handlers.onFotoSelected(this, 'equipo')">
+    <div class="preview-container" id="boxPreviewEquipo">
+      <img id="imgPreviewEquipo" class="d-none" alt="Vista previa del equipo">
+      <span class="text-muted small" id="lblPlaceholderEquipo"><i class="bi bi-image me-1"></i>Sin captura</span>
+    </div>
+    <span class="img-meta-badge text-muted text-center" id="metaEquipo"></span>
+  </div>
 
-            <!-- Foto 2: Albarán -->
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="fileFotoAlbaran">
-                <i class="bi bi-file-earmark-image-fill me-1 text-primary"></i>Foto Albarán Firmado
-              </label>
-              <input type="file" class="form-control mb-2" id="fileFotoAlbaran" 
-                     accept="image/jpeg,image/png,image/webp" capture="environment"
-                     onchange="app.handlers.onFotoSelected(this, 'albaran')">
-              <div class="preview-container" id="boxPreviewAlbaran">
-                <img id="imgPreviewAlbaran" class="d-none" alt="Vista previa del albarán">
-                <span class="text-muted small" id="lblPlaceholderAlbaran"><i class="bi bi-image me-1"></i>Sin captura</span>
-              </div>
-              <span class="img-meta-badge text-muted text-center" id="metaAlbaran"></span>
-            </div>
-          </div>
+  <!-- Foto 2: Albarán -->
+  <div class="col-md-6">
+    <label class="form-label fw-bold text-secondary" for="fileFotoAlbaran">
+      <i class="bi bi-file-earmark-image-fill me-1 text-primary"></i>Foto Albarán Firmado
+    </label>
+    <input type="file" class="form-control mb-2" id="fileFotoAlbaran" 
+           accept="image/jpeg,image/png,image/webp"
+           onchange="app.handlers.onFotoSelected(this, 'albaran')">
+    <div class="preview-container" id="boxPreviewAlbaran">
+      <img id="imgPreviewAlbaran" class="d-none" alt="Vista previa del albarán">
+      <span class="text-muted small" id="lblPlaceholderAlbaran"><i class="bi bi-image me-1"></i>Sin captura</span>
+    </div>
+    <span class="img-meta-badge text-muted text-center" id="metaAlbaran"></span>
+  </div>
+</div>
 
           <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnGuardarIntervencion">
             <i class="bi bi-cloud-check-fill me-2"></i>Registrar Intervención
