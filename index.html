@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Biokan - Gestión de Intervenciones</title>
+  <title>Biokan - Portal Operativo</title>
   
-  <!-- CSS Bootstrap y Bootstrap Icons con SRI Integrity -->
   <link rel="stylesheet" 
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
         integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
@@ -27,36 +26,31 @@
       background-color: var(--bk-bg);
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       color: #334155;
-      -webkit-font-smoothing: antialiased;
     }
     .card-custom {
       border-radius: 14px;
       border: 1px solid #e2e8f0;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
       background-color: var(--bk-surface);
       overflow: hidden;
     }
     .header-box {
       background: linear-gradient(135deg, #1e293b 0%, var(--bk-dark) 100%);
       color: #ffffff;
-      padding: 24px;
+      padding: 20px;
     }
     .btn-primary-custom {
       background-color: var(--bk-primary);
       border: none;
       border-radius: 8px;
       font-weight: 600;
-      transition: background-color 0.2s ease, transform 0.1s ease;
     }
     .btn-primary-custom:hover:not(:disabled) {
       background-color: var(--bk-primary-hover);
     }
-    .btn-primary-custom:active:not(:disabled) {
-      transform: scale(0.99);
-    }
     .preview-container {
       width: 100%;
-      height: 160px;
+      height: 150px;
       border: 2px dashed #cbd5e1;
       border-radius: 8px;
       display: flex;
@@ -65,7 +59,6 @@
       justify-content: center;
       overflow: hidden;
       background-color: #f1f5f9;
-      position: relative;
     }
     .preview-container img {
       width: 100%;
@@ -90,16 +83,27 @@
       flex-direction: column;
       color: #ffffff;
     }
-    .form-control:focus, .form-select:focus {
-      border-color: var(--bk-primary);
-      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
+    .nav-pills .nav-link {
+      color: #64748b;
+      font-weight: 600;
+      border-radius: 8px;
+    }
+    .nav-pills .nav-link.active {
+      background-color: var(--bk-primary);
+      color: #ffffff;
+    }
+    .wallet-card {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: white;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
     }
   </style>
 </head>
 <body>
 
-  <!-- SPINNER GLOBAL CON MENSAJES DINÁMICOS -->
-  <div class="loader-overlay" id="loaderOverlay" role="alert" aria-live="assertive">
+  <div class="loader-overlay" id="loaderOverlay" role="alert">
     <div class="spinner-border text-info" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
     <div class="mt-3 fw-bold fs-5" id="loaderStatusText">Cargando...</div>
     <small class="text-white-50 mt-1" id="loaderSubText">Por favor, espere</small>
@@ -111,7 +115,7 @@
     <div class="card card-custom mb-4" id="viewLogin">
       <div class="header-box text-center">
         <h4 class="mb-1"><i class="bi bi-shield-lock-fill text-info me-2"></i>Acceso Operativo Biokan</h4>
-        <small class="text-white-50">Portal técnico de intervenciones de campo</small>
+        <small class="text-white-50">Portal técnico y control de intervenciones</small>
       </div>
       <div class="card-body p-4">
         <form id="formLogin" onsubmit="app.actions.handleLogin(event)" novalidate>
@@ -131,183 +135,253 @@
       </div>
     </div>
 
-    <!-- PANTALLA: FORMULARIO PRINCIPAL -->
+    <!-- PANTALLA PRINCIPAL CON PESTAÑAS -->
     <div class="card card-custom d-none" id="viewMain">
       <div class="header-box d-flex justify-content-between align-items-center">
         <div>
-          <h5 class="mb-0 text-white"><i class="bi bi-clipboard2-pulse-fill text-info me-2"></i>Parte de Mantenimiento</h5>
-          <small class="text-white-50" id="labelTecnicoSesion">Técnico Conectado</small>
+          <h5 class="mb-0 text-white" id="labelTecnicoSesion">Técnico Conectado</h5>
+          <small class="text-white-50" id="labelUserCode"></small>
         </div>
-        <button class="btn btn-sm btn-outline-light" type="button" onclick="app.actions.handleLogout()" aria-label="Cerrar sesión">
+        <button class="btn btn-sm btn-outline-light" type="button" onclick="app.actions.handleLogout()">
           <i class="bi bi-box-arrow-right me-1"></i>Salir
         </button>
       </div>
 
+      <!-- SELECTOR DE MÓDULOS -->
+      <div class="p-3 bg-light border-bottom">
+        <ul class="nav nav-pills nav-fill" id="moduleTabs">
+          <li class="nav-item">
+            <button class="nav-link active" id="tab-mantenimiento" onclick="app.ui.switchModule('mantenimiento')">
+              <i class="bi bi-tools me-1"></i>Mantenimiento
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="tab-efectivo" onclick="app.ui.switchModule('efectivo')">
+              <i class="bi bi-wallet2 me-1"></i>Cartera Efectivo
+            </button>
+          </li>
+        </ul>
+      </div>
+
       <div class="card-body p-4">
-        <div class="alert alert-danger d-none" id="alertForm" role="alert"></div>
-        <div class="alert alert-success d-none" id="alertSuccess" role="alert"></div>
+        
+        <!-- ========================================== -->
+        <!-- MÓDULO 1: PARTES DE MANTENIMIENTO          -->
+        <!-- ========================================== -->
+        <div id="moduleMantenimiento">
+          <div class="alert alert-danger d-none" id="alertForm" role="alert"></div>
+          <div class="alert alert-success d-none" id="alertSuccess" role="alert"></div>
 
-        <form id="formIntervencion" onsubmit="app.actions.handleGuardar(event)" novalidate>
-          
-          <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="txtFecha">Fecha de Intervención *</label>
-              <input type="date" class="form-control" id="txtFecha" required>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="txtTecnicoNombre">Técnico Asignado</label>
-              <input type="text" class="form-control bg-light" id="txtTecnicoNombre" readonly>
-            </div>
-          </div>
-
-          <!-- SELECTORES CASCADA -->
-          <div class="p-3 bg-light rounded-3 mb-3 border">
-            <div class="mb-3">
-              <label class="form-label fw-bold text-dark" for="selEmpresa">1. Empresa (Cliente) *</label>
-              <select class="form-select" id="selEmpresa" onchange="app.handlers.onEmpresaChange()" required>
-                <option value="">-- Seleccionar Empresa --</option>
-              </select>
+          <form id="formIntervencion" onsubmit="app.actions.handleGuardarMantenimiento(event)" novalidate>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-secondary" for="txtFecha">Fecha de Intervención *</label>
+                <input type="date" class="form-control" id="txtFecha" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-secondary" for="txtTecnicoNombre">Técnico Responsable</label>
+                <input type="text" class="form-control bg-light" id="txtTecnicoNombre" readonly>
+              </div>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label fw-bold text-dark" for="selLocal">2. Local / Sede *</label>
-              <select class="form-select" id="selLocal" onchange="app.handlers.onLocalChange()" required disabled>
-                <option value="">-- Seleccionar Local --</option>
-              </select>
-            </div>
-
-            <div class="row g-2">
-              <div class="col-md-8">
-                <label class="form-label fw-bold text-dark" for="selEquipo">3. ID / Nº Serie Equipo *</label>
-                <select class="form-select" id="selEquipo" onchange="app.handlers.onEquipoChange()" required disabled>
-                  <option value="">-- Seleccionar Equipo --</option>
+            <div class="p-3 bg-light rounded-3 mb-3 border">
+              <div class="mb-3">
+                <label class="form-label fw-bold text-dark" for="selEmpresa">1. Empresa (Cliente) *</label>
+                <select class="form-select" id="selEmpresa" onchange="app.handlers.onEmpresaChange()" required>
+                  <option value="">-- Seleccionar Empresa --</option>
                 </select>
               </div>
-              <div class="col-md-4">
-                <label class="form-label fw-bold text-secondary" for="txtModeloEquipo">Modelo</label>
-                <input type="text" class="form-control bg-white" id="txtModeloEquipo" readonly placeholder="-">
+
+              <div class="mb-3">
+                <label class="form-label fw-bold text-dark" for="selLocal">2. Local / Sede *</label>
+                <select class="form-select" id="selLocal" onchange="app.handlers.onLocalChange()" required disabled>
+                  <option value="">-- Seleccionar Local --</option>
+                </select>
+              </div>
+
+              <div class="row g-2">
+                <div class="col-md-8">
+                  <label class="form-label fw-bold text-dark" for="selEquipo">3. ID / Nº Serie Equipo *</label>
+                  <select class="form-select" id="selEquipo" onchange="app.handlers.onEquipoChange()" required disabled>
+                    <option value="">-- Seleccionar Equipo --</option>
+                  </select>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label fw-bold text-secondary" for="txtModeloEquipo">Modelo</label>
+                  <input type="text" class="form-control bg-white" id="txtModeloEquipo" readonly placeholder="-">
+                </div>
               </div>
             </div>
-          </div>
 
-          <div class="row g-3 mb-3">
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="selTipoMant">Tipo de Mantenimiento *</label>
-              <select class="form-select" id="selTipoMant" required>
-                <option value="Programado">Programado</option>
-                <option value="Reparacion">Reparación</option>
-                <option value="Instalacion">Instalación</option>
-                <option value="Reparacion">Sustitución de equipo</option>
-                <option value="Reparacion">Retirada de equipo</option>
-              </select>
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-secondary" for="selTipoMant">Tipo de Mantenimiento *</label>
+                <select class="form-select" id="selTipoMant" required>
+                  <option value="Programado">Programado</option>
+                  <option value="Reparacion">Reparación</option>
+                  <option value="Instalacion">Instalación</option>
+                  <option value="Sustitucion">Sustitución de equipo</option>
+                  <option value="Retirada">Retirada de equipo</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-secondary" for="selEstadoFinal">Estado Final del Equipo *</label>
+                <select class="form-select" id="selEstadoFinal" required>
+                  <option value="Operativo">Operativo</option>
+                  <option value="Operativo con restricciones">Operativo con restricciones</option>
+                  <option value="Fuera de servicio">Fuera de servicio</option>
+                  <option value="En espera de repuestos">En espera de repuestos</option>
+                </select>
+              </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label fw-bold text-secondary" for="selEstadoFinal">Estado Final del Equipo *</label>
-              <select class="form-select" id="selEstadoFinal" required>
-                <option value="Operativo">Operativo</option>
-                <option value="Operativo con restricciones">Operativo con restricciones</option>
-                <option value="Fuera de servicio">Fuera de servicio</option>
-                <option value="En espera de repuestos">En espera de repuestos</option>
-              </select>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold text-secondary" for="taDescripcion">Descripción del Trabajo Realizado *</label>
+              <textarea class="form-control" id="taDescripcion" rows="3" required maxlength="2000" placeholder="Detalle técnico de las tareas realizadas..."></textarea>
+            </div>
+
+            <div class="mb-4">
+              <label class="form-label fw-bold text-secondary" for="taObservaciones">Observaciones / Pendientes</label>
+              <textarea class="form-control" id="taObservaciones" rows="2" maxlength="2000" placeholder="Notas adicionales o repuestos pendientes..."></textarea>
+            </div>
+
+            <!-- FOTOGRAFÍAS -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-secondary"><i class="bi bi-camera-fill me-1 text-primary"></i>Foto Equipo</label>
+                <input type="file" class="d-none" id="fileCamEquipo" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="app.handlers.onFotoSelected(this, 'equipo')">
+                <input type="file" class="d-none" id="fileGalEquipo" accept="image/jpeg,image/png,image/webp" onchange="app.handlers.onFotoSelected(this, 'equipo')">
+                <div class="d-flex gap-2 mb-2">
+                  <button type="button" class="btn btn-outline-primary btn-sm flex-fill" onclick="document.getElementById('fileCamEquipo').click()"><i class="bi bi-camera me-1"></i>Cámara</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="document.getElementById('fileGalEquipo').click()"><i class="bi bi-images me-1"></i>Galería</button>
+                </div>
+                <div class="preview-container" id="boxPreviewEquipo">
+                  <img id="imgPreviewEquipo" class="d-none" alt="Preview equipo">
+                  <span class="text-muted small" id="lblPlaceholderEquipo">Sin captura</span>
+                </div>
+                <span class="img-meta-badge text-muted text-center" id="metaEquipo"></span>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-secondary"><i class="bi bi-file-earmark-image-fill me-1 text-primary"></i>Foto Albarán</label>
+                <input type="file" class="d-none" id="fileCamAlbaran" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="app.handlers.onFotoSelected(this, 'albaran')">
+                <input type="file" class="d-none" id="fileGalAlbaran" accept="image/jpeg,image/png,image/webp" onchange="app.handlers.onFotoSelected(this, 'albaran')">
+                <div class="d-flex gap-2 mb-2">
+                  <button type="button" class="btn btn-outline-primary btn-sm flex-fill" onclick="document.getElementById('fileCamAlbaran').click()"><i class="bi bi-camera me-1"></i>Cámara</button>
+                  <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="document.getElementById('fileGalAlbaran').click()"><i class="bi bi-images me-1"></i>Galería</button>
+                </div>
+                <div class="preview-container" id="boxPreviewAlbaran">
+                  <img id="imgPreviewAlbaran" class="d-none" alt="Preview albarán">
+                  <span class="text-muted small" id="lblPlaceholderAlbaran">Sin captura</span>
+                </div>
+                <span class="img-meta-badge text-muted text-center" id="metaAlbaran"></span>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnGuardarIntervencion">
+              <i class="bi bi-cloud-check-fill me-2"></i>Registrar Intervención
+            </button>
+          </form>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MÓDULO 2: CARTERA DE EFECTIVO              -->
+        <!-- ========================================== -->
+        <div class="d-none" id="moduleEfectivo">
+          
+          <div class="wallet-card mb-4">
+            <small class="text-white-50 text-uppercase fw-bold">Saldo Actual Disponible</small>
+            <h2 class="display-5 fw-bold my-1" id="lblSaldoEfectivo">0,00 €</h2>
+            <small class="text-white-50">Caja de efectivo asignada a tu usuario</small>
+          </div>
+
+          <div class="alert alert-danger d-none" id="alertEfectivo" role="alert"></div>
+          <div class="alert alert-success d-none" id="alertSuccessEfectivo" role="alert"></div>
+
+          <form id="formEfectivo" onsubmit="app.actions.handleGuardarEfectivo(event)" novalidate>
+            
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-secondary" for="txtFechaEfectivo">Fecha *</label>
+                <input type="date" class="form-control" id="txtFechaEfectivo" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-secondary" for="selTipoEfectivo">Tipo de Movimiento *</label>
+                <select class="form-select" id="selTipoEfectivo" required>
+                  <option value="GASTO">GASTO (Salida de dinero)</option>
+                  <option value="INGRESO">INGRESO (Entrada de dinero)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-secondary" for="txtImporteEfectivo">Importe (€) *</label>
+                <input type="number" step="0.01" min="0.01" class="form-control form-control-lg" id="txtImporteEfectivo" placeholder="0.00" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-bold text-secondary" for="txtProveedorEfectivo">Proveedor / Entidad *</label>
+                <input type="text" class="form-control form-control-lg" id="txtProveedorEfectivo" placeholder="Ej: Obramat, Gasolinera, Banco..." required maxlength="150">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold text-secondary" for="txtConceptoEfectivo">Concepto *</label>
+              <input type="text" class="form-control" id="txtConceptoEfectivo" placeholder="Ej: Material fontanería, Ingreso caja..." required maxlength="250">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold text-secondary" for="taComentariosEfectivo">Comentarios / Observaciones</label>
+              <textarea class="form-control" id="taComentariosEfectivo" rows="2" maxlength="1000" placeholder="Detalle adicional..."></textarea>
+            </div>
+
+            <!-- FOTO TICKET / FACTURA -->
+            <div class="mb-4">
+              <label class="form-label fw-bold text-secondary"><i class="bi bi-receipt me-1 text-primary"></i>Foto Ticket / Factura</label>
+              <input type="file" class="d-none" id="fileCamFactura" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="app.handlers.onFotoSelected(this, 'factura')">
+              <input type="file" class="d-none" id="fileGalFactura" accept="image/jpeg,image/png,image/webp" onchange="app.handlers.onFotoSelected(this, 'factura')">
+              
+              <div class="d-flex gap-2 mb-2">
+                <button type="button" class="btn btn-outline-primary btn-sm flex-fill" onclick="document.getElementById('fileCamFactura').click()"><i class="bi bi-camera me-1"></i>Hacer Foto</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="document.getElementById('fileGalFactura').click()"><i class="bi bi-images me-1"></i>Galería</button>
+              </div>
+
+              <div class="preview-container" id="boxPreviewFactura">
+                <img id="imgPreviewFactura" class="d-none" alt="Preview ticket">
+                <span class="text-muted small" id="lblPlaceholderFactura">Sin captura de ticket</span>
+              </div>
+              <span class="img-meta-badge text-muted text-center" id="metaFactura"></span>
+            </div>
+
+            <button type="submit" class="btn btn-success w-100 py-3 text-white fs-5" id="btnGuardarEfectivo">
+              <i class="bi bi-check-circle-fill me-2"></i>Registrar Movimiento
+            </button>
+          </form>
+
+          <!-- ÚLTIMOS MOVIMIENTOS -->
+          <div class="mt-4">
+            <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-clock-history me-1"></i>Últimos Movimientos Registrados</h6>
+            <div class="list-group" id="listaUltimosMovimientos">
+              <div class="list-group-item text-center text-muted small py-3">No hay movimientos recientes</div>
             </div>
           </div>
 
-          <div class="mb-3">
-            <label class="form-label fw-bold text-secondary" for="taDescripcion">Descripción del Trabajo Realizado *</label>
-            <textarea class="form-control" id="taDescripcion" rows="3" required maxlength="2000" placeholder="Detalle técnico de tareas realizadas, pruebas y repuestos instalados..."></textarea>
-          </div>
+        </div>
 
-          <div class="mb-4">
-            <label class="form-label fw-bold text-secondary" for="taObservaciones">Observaciones / Pendientes</label>
-            <textarea class="form-control" id="taObservaciones" rows="2" maxlength="2000" placeholder="Notas adicionales o requerimientos para la próxima visita..."></textarea>
-          </div>
-
-<!-- MÓDULO DE FOTOGRAFÍAS -->
-<div class="row g-3 mb-4">
-  <!-- Foto 1: Equipo -->
-  <div class="col-md-6">
-    <label class="form-label fw-bold text-secondary">
-      <i class="bi bi-camera-fill me-1 text-primary"></i>Foto Equipo Terminado
-    </label>
-    
-    <!-- Inputs ocultos: uno con captura directa y otro para galería -->
-    <input type="file" class="d-none" id="fileCamEquipo" 
-           accept="image/jpeg,image/png,image/webp" capture="environment"
-           onchange="app.handlers.onFotoSelected(this, 'equipo')">
-    <input type="file" class="d-none" id="fileGalEquipo" 
-           accept="image/jpeg,image/png,image/webp"
-           onchange="app.handlers.onFotoSelected(this, 'equipo')">
-
-    <!-- Botones de selección para el técnico -->
-    <div class="d-flex gap-2 mb-2">
-      <button type="button" class="btn btn-outline-primary btn-sm flex-fill" onclick="document.getElementById('fileCamEquipo').click()">
-        <i class="bi bi-camera me-1"></i>Cámara
-      </button>
-      <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="document.getElementById('fileGalEquipo').click()">
-        <i class="bi bi-images me-1"></i>Galería
-      </button>
-    </div>
-
-    <div class="preview-container" id="boxPreviewEquipo">
-      <img id="imgPreviewEquipo" class="d-none" alt="Vista previa del equipo">
-      <span class="text-muted small" id="lblPlaceholderEquipo"><i class="bi bi-image me-1"></i>Sin captura</span>
-    </div>
-    <span class="img-meta-badge text-muted text-center" id="metaEquipo"></span>
-  </div>
-
-  <!-- Foto 2: Albarán -->
-  <div class="col-md-6">
-    <label class="form-label fw-bold text-secondary">
-      <i class="bi bi-file-earmark-image-fill me-1 text-primary"></i>Foto Albarán Firmado
-    </label>
-    
-    <!-- Inputs ocultos: uno con captura directa y otro para galería -->
-    <input type="file" class="d-none" id="fileCamAlbaran" 
-           accept="image/jpeg,image/png,image/webp" capture="environment"
-           onchange="app.handlers.onFotoSelected(this, 'albaran')">
-    <input type="file" class="d-none" id="fileGalAlbaran" 
-           accept="image/jpeg,image/png,image/webp"
-           onchange="app.handlers.onFotoSelected(this, 'albaran')">
-
-    <!-- Botones de selección para el técnico -->
-    <div class="d-flex gap-2 mb-2">
-      <button type="button" class="btn btn-outline-primary btn-sm flex-fill" onclick="document.getElementById('fileCamAlbaran').click()">
-        <i class="bi bi-camera me-1"></i>Cámara
-      </button>
-      <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="document.getElementById('fileGalAlbaran').click()">
-        <i class="bi bi-images me-1"></i>Galería
-      </button>
-    </div>
-
-    <div class="preview-container" id="boxPreviewAlbaran">
-      <img id="imgPreviewAlbaran" class="d-none" alt="Vista previa del albarán">
-      <span class="text-muted small" id="lblPlaceholderAlbaran"><i class="bi bi-image me-1"></i>Sin captura</span>
-    </div>
-    <span class="img-meta-badge text-muted text-center" id="metaAlbaran"></span>
-  </div>
-</div>
-
-          <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnGuardarIntervencion">
-            <i class="bi bi-cloud-check-fill me-2"></i>Registrar Intervención
-          </button>
-        </form>
       </div>
     </div>
 
   </div>
 
   <script>
-    /**
-     * MOTOR CLIENTE BIOKAN - SINGLE OBJECT NAMESPACE
-     */
     const app = {
       config: {
-        // ACTUALIZAR AQUÍ CON LA URL DE DESPLIEGUE FINAL /exec
+        // COLOCAR AQUÍ LA URL DE DESPLIEGUE /exec
         apiUrl: "https://script.google.com/macros/s/AKfycbzR4JZt4NSn15lQa3e6799xDa55pYq5ECner-vX3BtcNwcwQHJLlfC5ZrsXsWTZTEX9/exec",
-        version: "2.1.0",
-        maxFileRawBytes: 12582912, // 12 MB entrada
-        maxFinalBytes: 819200,      // 800 KB objetivo salida
-        timeoutMs: 50000            // 50 segundos timeout fetch
+        version: "2.2.0",
+        maxFileRawBytes: 12582912,
+        maxFinalBytes: 819200,
+        timeoutMs: 50000
       },
 
       state: {
@@ -315,10 +389,12 @@
         tecnico: null,
         usuario: null,
         dbRutas: {},
-        currentIdempotencyKey: null,
+        idempotencyMantenimiento: null,
+        idempotencyEfectivo: null,
         fotos: {
           equipo: { base64: '', bytes: 0 },
-          albaran: { base64: '', bytes: 0 }
+          albaran: { base64: '', bytes: 0 },
+          factura: { base64: '', bytes: 0 }
         }
       },
 
@@ -348,18 +424,33 @@
           opt.value = '';
           opt.textContent = defaultTxt;
           selectElem.appendChild(opt);
+        },
+
+        switchModule(modulo) {
+          const tabMant = document.getElementById('tab-mantenimiento');
+          const tabEf = document.getElementById('tab-efectivo');
+          const modMant = document.getElementById('moduleMantenimiento');
+          const modEf = document.getElementById('moduleEfectivo');
+
+          if (modulo === 'mantenimiento') {
+            tabMant.classList.add('active');
+            tabEf.classList.remove('active');
+            modMant.classList.remove('d-none');
+            modEf.classList.add('d-none');
+          } else {
+            tabEf.classList.add('active');
+            tabMant.classList.remove('active');
+            modEf.classList.remove('d-none');
+            modMant.classList.add('d-none');
+            app.actions.cargarSaldoEfectivo();
+          }
         }
       },
 
-      // MÓDULO DE COMPRESIÓN PROGRESIVA CON CANVAS
       imgEngine: {
         async comprimirImagen(file) {
           if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
             throw new Error('Tipo de archivo no permitido. Seleccione JPEG, PNG o WebP.');
-          }
-
-          if (file.size > app.config.maxFileRawBytes) {
-            throw new Error(`El archivo original es demasiado grande (${(file.size / 1048576).toFixed(1)} MB). Máximo permitido: 12 MB.`);
           }
 
           const originalSizeKb = Math.round(file.size / 1024);
@@ -370,7 +461,6 @@
           let width = imageBitmap.width;
           let height = imageBitmap.height;
 
-          // Ajuste de proporciones inicial
           if (width > maxDim || height > maxDim) {
             if (width > height) {
               height = Math.round((height * maxDim) / width);
@@ -387,13 +477,10 @@
           canvas.height = height;
           ctx.drawImage(imageBitmap, 0, 0, width, height);
 
-          // Bucle de degradación controlada (máximo 4 iteraciones para evitar bloqueos)
           let blob = null;
           for (let intento = 0; intento < 4; intento++) {
             blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', calidad));
-            if (blob.size <= app.config.maxFinalBytes || calidad <= 0.45) {
-              break;
-            }
+            if (blob.size <= app.config.maxFinalBytes || calidad <= 0.45) break;
             calidad -= 0.12;
             if (blob.size > app.config.maxFinalBytes * 1.5) {
               canvas.width = Math.round(canvas.width * 0.85);
@@ -402,12 +489,7 @@
             }
           }
 
-          // Liberación de recursos
           imageBitmap.close();
-
-          if (!blob || blob.size > app.config.maxFinalBytes) {
-            throw new Error('No fue posible comprimir la imagen por debajo del límite seguro de 800 KB.');
-          }
 
           const finalSizeKb = Math.round(blob.size / 1024);
           const base64 = await new Promise(resolve => {
@@ -424,7 +506,6 @@
         }
       },
 
-      // MOTOR DE COMUNICACIÓN CON REINTENTOS Y BACKOFF EXPONENCIAL
       api: {
         async request(accion, payloadExtra = {}, maxRetries = 2) {
           const bodyData = JSON.stringify({ accion: accion, ...payloadExtra });
@@ -444,26 +525,14 @@
               });
 
               clearTimeout(timeoutId);
-
-              if (!res.ok) {
-                throw new Error(`HTTP Error ${res.status}`);
-              }
-
-              const json = await res.json();
-              return json;
+              if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
+              return await res.json();
 
             } catch (err) {
               clearTimeout(timeoutId);
-              const isLast = intento === maxRetries;
-
-              if (isLast) {
-                if (err.name === 'AbortError') {
-                  return { success: false, error: 'Tiempo de espera agotado. Verifique su conexión y reintente.', code: 'ERR_TIMEOUT' };
-                }
-                return { success: false, error: 'Error de comunicación persistente con el servidor.', code: 'ERR_NETWORK' };
+              if (intento === maxRetries) {
+                return { success: false, error: 'Error de comunicación con el servidor.' };
               }
-
-              // Espera progresiva antes del reintento
               await new Promise(r => setTimeout(r, delay));
               delay *= 2;
             }
@@ -471,13 +540,13 @@
         }
       },
 
-      // CONTROLADORES DE EVENTOS
       handlers: {
         async onFotoSelected(input, tipo) {
           const file = input.files[0];
-          const previewImg = document.getElementById(tipo === 'equipo' ? 'imgPreviewEquipo' : 'imgPreviewAlbaran');
-          const placeholder = document.getElementById(tipo === 'equipo' ? 'lblPlaceholderEquipo' : 'lblPlaceholderAlbaran');
-          const metaBadge = document.getElementById(tipo === 'equipo' ? 'metaEquipo' : 'metaAlbaran');
+          const capTipo = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+          const previewImg = document.getElementById(`imgPreview${capTipo}`);
+          const placeholder = document.getElementById(`lblPlaceholder${capTipo}`);
+          const metaBadge = document.getElementById(`meta${capTipo}`);
 
           if (!file) {
             app.state.fotos[tipo] = { base64: '', bytes: 0 };
@@ -488,7 +557,7 @@
             return;
           }
 
-          app.ui.setLoader(true, 'Comprimiendo imagen...', 'Optimizando resolución para transmisión rápida');
+          app.ui.setLoader(true, 'Comprimiendo fotografía...', 'Optimizando para transmisión segura');
 
           try {
             const result = await app.imgEngine.comprimirImagen(file);
@@ -499,7 +568,6 @@
             placeholder.classList.add('d-none');
             metaBadge.textContent = `Optimizado: ${result.metaString}`;
             metaBadge.className = 'img-meta-badge text-success text-center';
-
           } catch (err) {
             input.value = '';
             app.state.fotos[tipo] = { base64: '', bytes: 0 };
@@ -565,7 +633,6 @@
         }
       },
 
-      // ACCIONES DE NEGOCIO
       actions: {
         async handleLogin(e) {
           e.preventDefault();
@@ -578,7 +645,7 @@
             return;
           }
 
-          app.ui.setLoader(true, 'Autenticando...', 'Verificando credenciales de acceso');
+          app.ui.setLoader(true, 'Autenticando...', 'Verificando credenciales');
           document.getElementById('btnLoginSubmit').disabled = true;
 
           const res = await app.api.request('login', { usuario: u, clave: p });
@@ -612,61 +679,83 @@
 
         async iniciarSesionUI() {
           document.getElementById('txtTecnicoNombre').value = app.state.tecnico;
-          document.getElementById('labelTecnicoSesion').textContent = `${app.state.tecnico} (${app.state.usuario})`;
+          document.getElementById('labelTecnicoSesion').textContent = app.state.tecnico;
+          document.getElementById('labelUserCode').textContent = `Usuario: ${app.state.usuario}`;
           document.getElementById('viewLogin').classList.add('d-none');
           document.getElementById('viewMain').classList.remove('d-none');
 
           await app.actions.cargarRutas();
+          await app.actions.cargarSaldoEfectivo();
         },
 
         async cargarRutas() {
-          app.ui.setLoader(true, 'Cargando rutas...', 'Sincronizando clientes y equipos');
           const res = await app.api.request('obtenerEquipos', { token: app.state.token });
-          app.ui.setLoader(false);
-
-          if (res.sessionExpired) {
-            alert('Su sesión ha expirado.');
-            app.actions.handleLogout();
-            return;
-          }
-
           if (res.success) {
             app.state.dbRutas = res.datos || {};
             const selEmpresa = document.getElementById('selEmpresa');
             app.ui.limpiarSelect(selEmpresa, '-- Seleccionar Empresa --');
-
             Object.keys(app.state.dbRutas).sort().forEach(emp => {
               const opt = document.createElement('option');
               opt.value = emp;
               opt.textContent = emp;
               selEmpresa.appendChild(opt);
             });
-          } else {
-            app.ui.showAlert('alertForm', res.error || 'Error cargando las rutas.');
           }
         },
 
-        generarNuevaIdempotencia() {
-          const array = new Uint8Array(16);
-          crypto.getRandomValues(array);
-          app.state.currentIdempotencyKey = 'IDEM_' + Array.from(array, b => ('0' + b.toString(16)).slice(-2)).join('');
+        async cargarSaldoEfectivo() {
+          const res = await app.api.request('obtenerSaldoEfectivo', { token: app.state.token });
+          if (res.success) {
+            const saldoFormatted = (parseFloat(res.saldo) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById('lblSaldoEfectivo').textContent = `${saldoFormatted} €`;
+
+            const lista = document.getElementById('listaUltimosMovimientos');
+            while (lista.firstChild) lista.removeChild(lista.firstChild);
+
+            if (res.ultimosMovimientos && res.ultimosMovimientos.length > 0) {
+              res.ultimosMovimientos.forEach(m => {
+                const item = document.createElement('div');
+                item.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
+                const isIngreso = m.tipo === 'INGRESO';
+                const colorBadge = isIngreso ? 'text-success' : 'text-danger';
+                const signo = isIngreso ? '+' : '-';
+                
+                item.innerHTML = `
+                  <div>
+                    <div class="fw-bold small">${m.concepto}</div>
+                    <small class="text-muted">${m.fecha} | ${m.proveedor}</small>
+                  </div>
+                  <span class="fw-bold ${colorBadge}">${signo}${parseFloat(m.importe).toFixed(2)} €</span>
+                `;
+                lista.appendChild(item);
+              });
+            } else {
+              lista.innerHTML = '<div class="list-group-item text-center text-muted small py-3">No hay movimientos registrados aún</div>';
+            }
+          }
         },
 
-        async handleGuardar(event) {
-          event.preventDefault();
+        generarIdempotencia(tipo) {
+          const array = new Uint8Array(16);
+          crypto.getRandomValues(array);
+          const key = 'IDEM_' + Array.from(array, b => ('0' + b.toString(16)).slice(-2)).join('');
+          if (tipo === 'mantenimiento') app.state.idempotencyMantenimiento = key;
+          else app.state.idempotencyEfectivo = key;
+          return key;
+        },
+
+        async handleGuardarMantenimiento(e) {
+          e.preventDefault();
           app.ui.showAlert('alertForm', null);
           app.ui.showAlert('alertSuccess', null);
 
-          if (!app.state.currentIdempotencyKey) {
-            app.actions.generarNuevaIdempotencia();
-          }
-
+          const key = app.state.idempotencyMantenimiento || app.actions.generarIdempotencia('mantenimiento');
           const btn = document.getElementById('btnGuardarIntervencion');
           btn.disabled = true;
-          app.ui.setLoader(true, 'Registrando intervención...', 'Transmitiendo datos técnicos a Google Cloud');
+          app.ui.setLoader(true, 'Registrando intervención...');
 
           const payload = {
-            idempotencyKey: app.state.currentIdempotencyKey,
+            idempotencyKey: key,
             fechaMantenimiento: document.getElementById('txtFecha').value,
             empresa: document.getElementById('selEmpresa').value,
             local: document.getElementById('selLocal').value,
@@ -679,50 +768,74 @@
             fotoAlbaranBase64: app.state.fotos.albaran.base64
           };
 
-          const res = await app.api.request('registrarIntervencion', {
-            token: app.state.token,
-            payload: payload
-          });
-
+          const res = await app.api.request('registrarIntervencion', { token: app.state.token, payload: payload });
           app.ui.setLoader(false);
           btn.disabled = false;
 
-          if (res.sessionExpired) {
-            alert('Su sesión ha caducado durante el envío. Inicie sesión nuevamente.');
-            app.actions.handleLogout();
-            return;
-          }
-
           if (res.success) {
-            const idInt = res.idIntervencion || 'OK';
-            app.ui.showAlert('alertSuccess', `¡Intervención registrada exitosamente! ID: ${idInt}`);
-            
-            // Limpieza completa tras confirmación positiva
+            app.ui.showAlert('alertSuccess', `¡Intervención guardada! ID: ${res.idIntervencion || 'OK'}`);
             document.getElementById('formIntervencion').reset();
             document.getElementById('txtFecha').valueAsDate = new Date();
             document.getElementById('txtTecnicoNombre').value = app.state.tecnico;
             document.getElementById('selLocal').disabled = true;
             document.getElementById('selEquipo').disabled = true;
-
-            ['equipo', 'albaran'].forEach(tipo => {
-              app.state.fotos[tipo] = { base64: '', bytes: 0 };
-              const prev = document.getElementById(tipo === 'equipo' ? 'imgPreviewEquipo' : 'imgPreviewAlbaran');
-              const ph = document.getElementById(tipo === 'equipo' ? 'lblPlaceholderEquipo' : 'lblPlaceholderAlbaran');
-              const mb = document.getElementById(tipo === 'equipo' ? 'metaEquipo' : 'metaAlbaran');
-              prev.src = '';
-              prev.classList.add('d-none');
-              ph.classList.remove('d-none');
-              mb.textContent = '';
+            ['equipo', 'albaran'].forEach(t => {
+              app.state.fotos[t] = { base64: '', bytes: 0 };
+              const cap = t.charAt(0).toUpperCase() + t.slice(1);
+              document.getElementById(`imgPreview${cap}`).classList.add('d-none');
+              document.getElementById(`lblPlaceholder${cap}`).classList.remove('d-none');
+              document.getElementById(`meta${cap}`).textContent = '';
             });
-
-            app.state.currentIdempotencyKey = null; // Reiniciar clave solo tras éxito
+            app.state.idempotencyMantenimiento = null;
           } else {
-            app.ui.showAlert('alertForm', res.error || 'No se pudo guardar la intervención.');
+            app.ui.showAlert('alertForm', res.error || 'Error al guardar intervención.');
+          }
+        },
+
+        async handleGuardarEfectivo(e) {
+          e.preventDefault();
+          app.ui.showAlert('alertEfectivo', null);
+          app.ui.showAlert('alertSuccessEfectivo', null);
+
+          const key = app.state.idempotencyEfectivo || app.actions.generarIdempotencia('efectivo');
+          const btn = document.getElementById('btnGuardarEfectivo');
+          btn.disabled = true;
+          app.ui.setLoader(true, 'Registrando movimiento de efectivo...');
+
+          const payload = {
+            idempotencyKey: key,
+            fecha: document.getElementById('txtFechaEfectivo').value,
+            tipo: document.getElementById('selTipoEfectivo').value,
+            importe: document.getElementById('txtImporteEfectivo').value,
+            proveedor: document.getElementById('txtProveedorEfectivo').value,
+            concepto: document.getElementById('txtConceptoEfectivo').value,
+            comentarios: document.getElementById('taComentariosEfectivo').value,
+            fotoFacturaBase64: app.state.fotos.factura.base64
+          };
+
+          const res = await app.api.request('registrarMovimientoEfectivo', { token: app.state.token, payload: payload });
+          app.ui.setLoader(false);
+          btn.disabled = false;
+
+          if (res.success) {
+            app.ui.showAlert('alertSuccessEfectivo', '¡Movimiento de efectivo registrado correctamente!');
+            document.getElementById('formEfectivo').reset();
+            document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
+            app.state.fotos.factura = { base64: '', bytes: 0 };
+            document.getElementById('imgPreviewFactura').classList.add('d-none');
+            document.getElementById('lblPlaceholderFactura').classList.remove('d-none');
+            document.getElementById('metaFactura').textContent = '';
+            app.state.idempotencyEfectivo = null;
+
+            await app.actions.cargarSaldoEfectivo();
+          } else {
+            app.ui.showAlert('alertEfectivo', res.error || 'Error al registrar movimiento.');
           }
         },
 
         init() {
           document.getElementById('txtFecha').valueAsDate = new Date();
+          document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
           const token = sessionStorage.getItem('BK_AUTH_TOKEN');
           const tec = sessionStorage.getItem('BK_AUTH_TECNICO');
           const usr = sessionStorage.getItem('BK_AUTH_USER');
