@@ -222,16 +222,32 @@
             <textarea class="form-control" id="taObservaciones" rows="2" maxlength="2000" placeholder="Notas adicionales o requerimientos para la próxima visita..."></textarea>
           </div>
 
-<!-- FOTOGRAFÍAS -->
+<!-- MÓDULO DE FOTOGRAFÍAS -->
 <div class="row g-3 mb-4">
   <!-- Foto 1: Equipo -->
   <div class="col-md-6">
-    <label class="form-label fw-bold text-secondary" for="fileFotoEquipo">
+    <label class="form-label fw-bold text-secondary">
       <i class="bi bi-camera-fill me-1 text-primary"></i>Foto Equipo Terminado
     </label>
-    <input type="file" class="form-control mb-2" id="fileFotoEquipo" 
+    
+    <!-- Inputs ocultos: uno con captura directa y otro para galería -->
+    <input type="file" class="d-none" id="fileCamEquipo" 
+           accept="image/jpeg,image/png,image/webp" capture="environment"
+           onchange="app.handlers.onFotoSelected(this, 'equipo')">
+    <input type="file" class="d-none" id="fileGalEquipo" 
            accept="image/jpeg,image/png,image/webp"
            onchange="app.handlers.onFotoSelected(this, 'equipo')">
+
+    <!-- Botones de selección para el técnico -->
+    <div class="d-flex gap-2 mb-2">
+      <button type="button" class="btn btn-outline-primary btn-sm flex-fill" onclick="document.getElementById('fileCamEquipo').click()">
+        <i class="bi bi-camera me-1"></i>Cámara
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="document.getElementById('fileGalEquipo').click()">
+        <i class="bi bi-images me-1"></i>Galería
+      </button>
+    </div>
+
     <div class="preview-container" id="boxPreviewEquipo">
       <img id="imgPreviewEquipo" class="d-none" alt="Vista previa del equipo">
       <span class="text-muted small" id="lblPlaceholderEquipo"><i class="bi bi-image me-1"></i>Sin captura</span>
@@ -241,12 +257,28 @@
 
   <!-- Foto 2: Albarán -->
   <div class="col-md-6">
-    <label class="form-label fw-bold text-secondary" for="fileFotoAlbaran">
+    <label class="form-label fw-bold text-secondary">
       <i class="bi bi-file-earmark-image-fill me-1 text-primary"></i>Foto Albarán Firmado
     </label>
-    <input type="file" class="form-control mb-2" id="fileFotoAlbaran" 
+    
+    <!-- Inputs ocultos: uno con captura directa y otro para galería -->
+    <input type="file" class="d-none" id="fileCamAlbaran" 
+           accept="image/jpeg,image/png,image/webp" capture="environment"
+           onchange="app.handlers.onFotoSelected(this, 'albaran')">
+    <input type="file" class="d-none" id="fileGalAlbaran" 
            accept="image/jpeg,image/png,image/webp"
            onchange="app.handlers.onFotoSelected(this, 'albaran')">
+
+    <!-- Botones de selección para el técnico -->
+    <div class="d-flex gap-2 mb-2">
+      <button type="button" class="btn btn-outline-primary btn-sm flex-fill" onclick="document.getElementById('fileCamAlbaran').click()">
+        <i class="bi bi-camera me-1"></i>Cámara
+      </button>
+      <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="document.getElementById('fileGalAlbaran').click()">
+        <i class="bi bi-images me-1"></i>Galería
+      </button>
+    </div>
+
     <div class="preview-container" id="boxPreviewAlbaran">
       <img id="imgPreviewAlbaran" class="d-none" alt="Vista previa del albarán">
       <span class="text-muted small" id="lblPlaceholderAlbaran"><i class="bi bi-image me-1"></i>Sin captura</span>
