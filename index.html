@@ -2,664 +2,368 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Biokan - Portal Operativo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://script.google.com;">
+  <title>Biokan - Field Operations</title>
   
-  <link rel="stylesheet" 
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" 
-        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" 
-        crossorigin="anonymous">
-  <link rel="stylesheet" 
-        href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" 
-        integrity="sha384-4LISF5TTJX/fLmGSxO53rV4miRxdg84mZsxmO8Rx5jGtp/LbrixFETvWa5a6sESd" 
-        crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
   <style>
     :root {
-      --bk-primary: #0284c7;
-      --bk-primary-hover: #0369a1;
-      --bk-dark: #0f172a;
-      --bk-surface: #ffffff;
-      --bk-bg: #f8fafc;
+      --bk-primary: #0284c7; --bk-primary-hover: #0369a1; --bk-dark: #0f172a; --bk-bg: #f1f5f9;
     }
-    body {
-      background-color: var(--bk-bg);
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      color: #334155;
-    }
-    .card-custom {
-      border-radius: 14px;
-      border: 1px solid #e2e8f0;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
-      background-color: var(--bk-surface);
-      overflow: hidden;
-    }
-    .header-box {
-      background: linear-gradient(135deg, #1e293b 0%, var(--bk-dark) 100%);
-      color: #ffffff;
-      padding: 20px;
-    }
-    .btn-primary-custom {
-      background-color: var(--bk-primary);
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-    }
-    .btn-primary-custom:hover:not(:disabled) {
-      background-color: var(--bk-primary-hover);
-    }
-    .preview-container {
-      width: 100%;
-      height: 150px;
-      border: 2px dashed #cbd5e1;
-      border-radius: 8px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      background-color: #f1f5f9;
-    }
-    .preview-container img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .img-meta-badge {
-      font-size: 0.75rem;
-      font-weight: 600;
-      margin-top: 4px;
-      display: block;
-    }
-    .loader-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(4px);
-      z-index: 9999;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
-      color: #ffffff;
-    }
-    .nav-pills .nav-link {
-      color: #64748b;
-      font-weight: 600;
-      border-radius: 8px;
-      font-size: 0.9rem;
-    }
-    .nav-pills .nav-link.active {
-      background-color: var(--bk-primary);
-      color: #ffffff;
-    }
-    .wallet-card {
-      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
-      color: white;
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-    }
-    .mat-row {
-      background-color: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: 10px;
-      margin-bottom: 8px;
-    }
+    body { background-color: var(--bk-bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #334155; padding-bottom: 80px; }
+    
+    /* Top Bar & Cards */
+    .card-custom { border-radius: 14px; border: none; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); background-color: #fff; overflow: hidden; }
+    .header-box { background: linear-gradient(135deg, #1e293b 0%, var(--bk-dark) 100%); color: #fff; padding: 18px; border-radius: 0 0 16px 16px; margin-bottom: 20px;}
+    .btn-primary-custom { background-color: var(--bk-primary); border: none; border-radius: 8px; font-weight: 600; padding: 12px; }
+    
+    /* Bottom Navigation Bar (App Feel) */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); border-radius: 20px 20px 0 0; }
+    .nav-item-bottom { flex: 1; text-align: center; padding: 12px 0; color: #94a3b8; font-size: 0.75rem; cursor: pointer; border-top: 3px solid transparent; transition: all 0.2s; }
+    .nav-item-bottom.active { color: var(--bk-primary); border-top-color: var(--bk-primary); font-weight: 700; background: linear-gradient(to top, rgba(2,132,199,0.08), transparent); }
+    .nav-item-bottom i { font-size: 1.4rem; display: block; margin-bottom: 2px; }
+
+    /* Offline Warning */
+    #offlineWarning { position: fixed; top: 0; left: 0; width: 100%; background-color: #ef4444; color: white; text-align: center; padding: 6px; font-weight: bold; font-size: 0.85rem; z-index: 2000; display: none; }
+    
+    /* Previews & Helpers */
+    .preview-container { width: 100%; height: 120px; border: 2px dashed #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;}
+    .preview-container img { width: 100%; height: 100%; object-fit: cover; }
+    .mat-row { background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid var(--bk-primary); }
+    
+    /* Toast Positioning */
+    .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1055; width: 90%; max-width: 400px;}
+    
+    /* Loader Overlay */
+    .loader-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: #fff; }
   </style>
 </head>
 <body>
 
-  <div class="loader-overlay" id="loaderOverlay" role="alert">
-    <div class="spinner-border text-info" style="width: 3.5rem; height: 3.5rem;" role="status"></div>
-    <div class="mt-3 fw-bold fs-5" id="loaderStatusText">Cargando...</div>
-    <small class="text-white-50 mt-1" id="loaderSubText">Por favor, espere</small>
+  <!-- OFFLINE WARNING -->
+  <div id="offlineWarning"><i class="bi bi-wifi-off me-2"></i>Sin conexión. Espera a tener cobertura para enviar.</div>
+
+  <!-- LOADER -->
+  <div class="loader-overlay" id="loaderOverlay">
+    <div class="spinner-border text-info" style="width: 3rem; height: 3rem;" role="status"></div>
+    <div class="mt-3 fw-bold fs-5" id="loaderStatusText">Procesando...</div>
   </div>
 
-  <div class="container py-4" style="max-width: 680px;">
+  <!-- TOASTS CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="container py-2" style="max-width: 680px;">
     
     <!-- PANTALLA: LOGIN -->
     <div class="card card-custom mb-4" id="viewLogin">
-      <div class="header-box text-center">
-        <h4 class="mb-1"><i class="bi bi-shield-lock-fill text-info me-2"></i>Acceso Operativo Biokan</h4>
-        <small class="text-white-50">Portal técnico y control de intervenciones</small>
+      <div class="header-box text-center shadow-none mb-0 rounded-0">
+        <h3 class="mb-1"><i class="bi bi-shield-lock text-info me-2"></i>Biokan Auth</h3>
+        <small class="text-white-50">Portal Técnico Seguro</small>
       </div>
       <div class="card-body p-4">
-        <form id="formLogin" onsubmit="app.actions.handleLogin(event)" novalidate>
+        <form id="formLogin" onsubmit="app.actions.handleLogin(event)">
           <div class="mb-3">
-            <label class="form-label fw-bold text-secondary" for="inputUser">Usuario</label>
-            <input type="text" class="form-control form-control-lg" id="inputUser" autocomplete="username" required maxlength="50">
+            <label class="form-label fw-bold text-secondary">Usuario</label>
+            <input type="text" class="form-control form-control-lg" id="inputUser" required autocomplete="username">
           </div>
           <div class="mb-4">
-            <label class="form-label fw-bold text-secondary" for="inputPass">Contraseña</label>
-            <input type="password" class="form-control form-control-lg" id="inputPass" autocomplete="current-password" required maxlength="100" placeholder="••••••••">
+            <label class="form-label fw-bold text-secondary">Contraseña</label>
+            <input type="password" class="form-control form-control-lg" id="inputPass" required autocomplete="current-password">
           </div>
-          <div class="alert alert-danger d-none" id="alertLogin" role="alert"></div>
-          <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnLoginSubmit">
-            Iniciar Sesión
-          </button>
+          <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnLoginSubmit">Acceder al Sistema</button>
         </form>
       </div>
     </div>
 
     <!-- PANTALLA PRINCIPAL -->
-    <div class="card card-custom d-none" id="viewMain">
+    <div class="d-none" id="viewMain">
       <div class="header-box d-flex justify-content-between align-items-center">
         <div>
-          <h5 class="mb-0 text-white" id="labelTecnicoSesion">Técnico Conectado</h5>
-          <small class="text-white-50" id="labelUserCode"></small>
+          <h5 class="mb-0 fw-bold" id="labelTecnicoSesion">Técnico</h5>
+          <small class="text-info" id="labelUserCode">TB00</small>
         </div>
-        <button class="btn btn-sm btn-outline-light" type="button" onclick="app.actions.handleLogout()">
-          <i class="bi bi-box-arrow-right me-1"></i>Salir
-        </button>
+        <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="app.actions.handleLogout()"><i class="bi bi-box-arrow-right"></i> Salir</button>
       </div>
 
-      <!-- SELECTOR DE PESTAÑAS -->
-      <div class="p-2 bg-light border-bottom">
-        <ul class="nav nav-pills nav-fill gap-1" id="moduleTabs">
-          <li class="nav-item">
-            <button class="nav-link active" id="tab-mantenimiento" onclick="app.ui.switchModule('mantenimiento')">
-              <i class="bi bi-tools me-1"></i>Partes
-            </button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-link" id="tab-efectivo" onclick="app.ui.switchModule('efectivo')">
-              <i class="bi bi-wallet2 me-1"></i>Efectivo
-            </button>
-          </li>
-          <li class="nav-item">
-            <button class="nav-link" id="tab-furgon" onclick="app.ui.switchModule('furgon')">
-              <i class="bi bi-truck me-1"></i>Mi Furgón
-            </button>
-          </li>
-        </ul>
-      </div>
+      <!-- MÓDULO 1: MANTENIMIENTO -->
+      <div id="moduleMantenimiento" class="px-2 pb-5">
+        <form id="formIntervencion" onsubmit="app.actions.handleGuardarMantenimiento(event)">
+          
+          <div class="card card-custom p-3 mb-3">
+            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-geo-alt me-1"></i>Ubicación y Equipo</h6>
+            <input type="date" class="form-control mb-3" id="txtFecha" required>
+            <select class="form-select mb-3" id="selEmpresa" onchange="app.handlers.onEmpresaChange()" required>
+              <option value="">-- 1. Empresa Cliente --</option>
+            </select>
+            <select class="form-select mb-3" id="selLocal" onchange="app.handlers.onLocalChange()" required disabled>
+              <option value="">-- 2. Local / Sede --</option>
+            </select>
+            <select class="form-select mb-3" id="selEquipo" onchange="app.handlers.onEquipoChange()" required disabled>
+              <option value="">-- 3. Equipo / Nº Serie --</option>
+            </select>
+            <input type="text" class="form-control bg-light" id="txtModeloEquipo" readonly placeholder="Modelo de equipo autocompletado">
+          </div>
 
-      <div class="card-body p-4">
-        
-        <!-- ========================================== -->
-        <!-- MÓDULO 1: PARTES DE MANTENIMIENTO          -->
-        <!-- ========================================== -->
-        <div id="moduleMantenimiento">
-          <div class="alert alert-danger d-none" id="alertForm" role="alert"></div>
-          <div class="alert alert-success d-none" id="alertSuccess" role="alert"></div>
+          <div class="card card-custom p-3 mb-3">
+            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-card-checklist me-1"></i>Detalles del Trabajo</h6>
+            <select class="form-select mb-3" id="selTipoMant" required>
+              <option value="">-- Tipo de Intervención --</option>
+              <option value="Programado">Mantenimiento Programado</option>
+              <option value="Reparacion">Reparación de Avería</option>
+              <option value="Instalacion">Nueva Instalación</option>
+              <option value="Sustitucion">Sustitución de Equipo</option>
+              <option value="Retirada">Retirada de Equipo</option>
+            </select>
+            <select class="form-select mb-3" id="selEstadoFinal" required>
+              <option value="">-- Estado en el que queda el equipo --</option>
+              <option value="Operativo">Operativo (100% Funcional)</option>
+              <option value="Operativo con restricciones">Operativo con restricciones</option>
+              <option value="Fuera de servicio">Fuera de servicio</option>
+              <option value="En espera de repuestos">A la espera de material/repuestos</option>
+            </select>
+            <textarea class="form-control mb-3" id="taDescripcion" rows="3" required placeholder="Describe paso a paso el trabajo realizado..."></textarea>
+            <textarea class="form-control" id="taObservaciones" rows="2" placeholder="Observaciones, riesgos o piezas necesarias para volver..."></textarea>
+          </div>
 
-          <form id="formIntervencion" onsubmit="app.actions.handleGuardarMantenimiento(event)" novalidate>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary" for="txtFecha">Fecha de Intervención *</label>
-                <input type="date" class="form-control" id="txtFecha" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary" for="txtTecnicoNombre">Técnico Responsable</label>
-                <input type="text" class="form-control bg-light" id="txtTecnicoNombre" readonly>
-              </div>
+          <!-- MATERIALES UTILIZADOS (MULTI-ROW) -->
+          <div class="card card-custom p-3 mb-3 border-primary border-opacity-25">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold text-primary mb-0"><i class="bi bi-box-seam me-1"></i>Materiales Gastados</h6>
+              <button type="button" class="btn btn-sm btn-primary rounded-pill" onclick="app.handlers.agregarFilaMaterial()"><i class="bi bi-plus-lg"></i> Añadir</button>
             </div>
+            <div id="contenedorMaterialesUsados"></div>
+            <small class="text-muted fst-italic text-center d-block mt-2">Lo que añadas aquí se descontará de tu furgón.</small>
+          </div>
 
-            <div class="p-3 bg-light rounded-3 mb-3 border">
-              <div class="mb-3">
-                <label class="form-label fw-bold text-dark" for="selEmpresa">1. Empresa (Cliente) *</label>
-                <select class="form-select" id="selEmpresa" onchange="app.handlers.onEmpresaChange()" required>
-                  <option value="">-- Seleccionar Empresa --</option>
-                </select>
-              </div>
-
-              <div class="mb-3">
-                <label class="form-label fw-bold text-dark" for="selLocal">2. Local / Sede *</label>
-                <select class="form-select" id="selLocal" onchange="app.handlers.onLocalChange()" required disabled>
-                  <option value="">-- Seleccionar Local --</option>
-                </select>
-              </div>
-
-              <div class="row g-2">
-                <div class="col-md-8">
-                  <label class="form-label fw-bold text-dark" for="selEquipo">3. ID / Nº Serie Equipo *</label>
-                  <select class="form-select" id="selEquipo" onchange="app.handlers.onEquipoChange()" required disabled>
-                    <option value="">-- Seleccionar Equipo --</option>
-                  </select>
-                </div>
-                <div class="col-md-4">
-                  <label class="form-label fw-bold text-secondary" for="txtModeloEquipo">Modelo</label>
-                  <input type="text" class="form-control bg-white" id="txtModeloEquipo" readonly placeholder="-">
-                </div>
-              </div>
-            </div>
-
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary" for="selTipoMant">Tipo de Mantenimiento *</label>
-                <select class="form-select" id="selTipoMant" required>
-                  <option value="Programado">Programado</option>
-                  <option value="Reparacion">Reparación</option>
-                  <option value="Instalacion">Instalación</option>
-                  <option value="Sustitucion">Sustitución de equipo</option>
-                  <option value="Retirada">Retirada de equipo</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary" for="selEstadoFinal">Estado Final del Equipo *</label>
-                <select class="form-select" id="selEstadoFinal" required>
-                  <option value="Operativo">Operativo</option>
-                  <option value="Operativo con restricciones">Operativo con restricciones</option>
-                  <option value="Fuera de servicio">Fuera de servicio</option>
-                  <option value="En espera de repuestos">En espera de repuestos</option>
-                </select>
-              </div>
-            </div>
-
-            <!-- SECCIÓN: MATERIALES UTILIZADOS (MULTI-SELECCIÓN DINÁMICA) -->
-            <div class="p-3 bg-light rounded-3 mb-3 border">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <label class="form-label fw-bold text-dark mb-0">
-                  <i class="bi bi-box-seam me-1 text-primary"></i>Materiales / Repuestos Utilizados
-                </label>
-                <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="app.handlers.agregarFilaMaterial()">
-                  <i class="bi bi-plus-circle me-1"></i>Añadir material
-                </button>
-              </div>
-              
-              <div id="contenedorMaterialesUsados">
-                <!-- Se añaden dinámicamente aquí -->
-              </div>
-              <small class="text-muted d-block mt-1" style="font-size: 0.75rem;">Los materiales seleccionados se descontarán automáticamente de tu furgoneta.</small>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-bold text-secondary" for="taDescripcion">Descripción del Trabajo Realizado *</label>
-              <textarea class="form-control" id="taDescripcion" rows="3" required maxlength="2000" placeholder="Detalle técnico de las tareas realizadas..."></textarea>
-            </div>
-
-            <div class="mb-4">
-              <label class="form-label fw-bold text-secondary" for="taObservaciones">Observaciones / Pendientes</label>
-              <textarea class="form-control" id="taObservaciones" rows="2" maxlength="2000" placeholder="Notas adicionales o repuestos pendientes..."></textarea>
-            </div>
-
-            <!-- FOTOGRAFÍAS -->
-            <div class="row g-3 mb-4">
-              <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary"><i class="bi bi-camera-fill me-1 text-primary"></i>Foto Equipo</label>
-                <input type="file" class="d-none" id="fileCamEquipo" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="app.handlers.onFotoSelected(this, 'equipo')">
-                <input type="file" class="d-none" id="fileGalEquipo" accept="image/jpeg,image/png,image/webp" onchange="app.handlers.onFotoSelected(this, 'equipo')">
-                <div class="d-flex gap-2 mb-2">
-                  <button type="button" class="btn btn-outline-primary btn-sm flex-fill" onclick="document.getElementById('fileCamEquipo').click()"><i class="bi bi-camera me-1"></i>Cámara</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="document.getElementById('fileGalEquipo').click()"><i class="bi bi-images me-1"></i>Galería</button>
+          <!-- FOTOGRAFÍAS -->
+          <div class="card card-custom p-3 mb-4">
+            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-camera me-1"></i>Fotografías Obligatorias</h6>
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="small fw-bold mb-1">Foto del Equipo</label>
+                <input type="file" class="d-none" id="fileCamEquipo" accept="image/*" capture="environment" onchange="app.handlers.onFotoSelected(this, 'equipo')">
+                <input type="file" class="d-none" id="fileGalEquipo" accept="image/*" onchange="app.handlers.onFotoSelected(this, 'equipo')">
+                <div class="d-flex gap-1 mb-2">
+                  <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileCamEquipo').click()"><i class="bi bi-camera"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileGalEquipo').click()"><i class="bi bi-image"></i></button>
                 </div>
                 <div class="preview-container" id="boxPreviewEquipo">
-                  <img id="imgPreviewEquipo" class="d-none" alt="Preview equipo">
-                  <span class="text-muted small" id="lblPlaceholderEquipo">Sin captura</span>
+                  <img id="imgPreviewEquipo" class="d-none">
+                  <small class="text-muted" id="lblPlaceholderEquipo">Vacío</small>
                 </div>
-                <span class="img-meta-badge text-muted text-center" id="metaEquipo"></span>
+                <small class="d-block text-center mt-1 text-success fw-bold" id="metaEquipo"></small>
               </div>
-
-              <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary"><i class="bi bi-file-earmark-image-fill me-1 text-primary"></i>Foto Albarán</label>
-                <input type="file" class="d-none" id="fileCamAlbaran" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="app.handlers.onFotoSelected(this, 'albaran')">
-                <input type="file" class="d-none" id="fileGalAlbaran" accept="image/jpeg,image/png,image/webp" onchange="app.handlers.onFotoSelected(this, 'albaran')">
-                <div class="d-flex gap-2 mb-2">
-                  <button type="button" class="btn btn-outline-primary btn-sm flex-fill" onclick="document.getElementById('fileCamAlbaran').click()"><i class="bi bi-camera me-1"></i>Cámara</button>
-                  <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="document.getElementById('fileGalAlbaran').click()"><i class="bi bi-images me-1"></i>Galería</button>
+              
+              <div class="col-6">
+                <label class="small fw-bold mb-1">Foto del Albarán</label>
+                <input type="file" class="d-none" id="fileCamAlbaran" accept="image/*" capture="environment" onchange="app.handlers.onFotoSelected(this, 'albaran')">
+                <input type="file" class="d-none" id="fileGalAlbaran" accept="image/*" onchange="app.handlers.onFotoSelected(this, 'albaran')">
+                <div class="d-flex gap-1 mb-2">
+                  <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileCamAlbaran').click()"><i class="bi bi-camera"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileGalAlbaran').click()"><i class="bi bi-image"></i></button>
                 </div>
                 <div class="preview-container" id="boxPreviewAlbaran">
-                  <img id="imgPreviewAlbaran" class="d-none" alt="Preview albarán">
-                  <span class="text-muted small" id="lblPlaceholderAlbaran">Sin captura</span>
+                  <img id="imgPreviewAlbaran" class="d-none">
+                  <small class="text-muted" id="lblPlaceholderAlbaran">Vacío</small>
                 </div>
-                <span class="img-meta-badge text-muted text-center" id="metaAlbaran"></span>
-              </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnGuardarIntervencion">
-              <i class="bi bi-cloud-check-fill me-2"></i>Registrar Intervención
-            </button>
-          </form>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- MÓDULO 2: CARTERA DE EFECTIVO              -->
-        <!-- ========================================== -->
-        <div class="d-none" id="moduleEfectivo">
-          <div class="wallet-card mb-4">
-            <small class="text-white-50 text-uppercase fw-bold">Saldo Actual Disponible</small>
-            <h2 class="display-5 fw-bold my-1" id="lblSaldoEfectivo">0,00 €</h2>
-            <small class="text-white-50">Caja de efectivo asignada a tu usuario</small>
-          </div>
-
-          <div class="alert alert-danger d-none" id="alertEfectivo" role="alert"></div>
-          <div class="alert alert-success d-none" id="alertSuccessEfectivo" role="alert"></div>
-
-          <form id="formEfectivo" onsubmit="app.actions.handleGuardarEfectivo(event)" novalidate>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary" for="txtFechaEfectivo">Fecha *</label>
-                <input type="date" class="form-control" id="txtFechaEfectivo" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary" for="selTipoEfectivo">Tipo de Movimiento *</label>
-                <select class="form-select" id="selTipoEfectivo" required>
-                  <option value="GASTO">GASTO (Salida de dinero)</option>
-                  <option value="INGRESO">INGRESO (Entrada de dinero)</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary" for="txtImporteEfectivo">Importe (€) *</label>
-                <input type="number" step="0.01" min="0.01" class="form-control form-control-lg" id="txtImporteEfectivo" placeholder="0.00" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-bold text-secondary" for="txtProveedorEfectivo">Proveedor / Entidad *</label>
-                <input type="text" class="form-control form-control-lg" id="txtProveedorEfectivo" placeholder="Ej: Obramat, Gasolinera, Banco..." required maxlength="150">
-              </div>
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-bold text-secondary" for="txtConceptoEfectivo">Concepto *</label>
-              <input type="text" class="form-control" id="txtConceptoEfectivo" placeholder="Ej: Material fontanería, Ingreso caja..." required maxlength="250">
-            </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-bold text-secondary" for="taComentariosEfectivo">Comentarios / Observaciones</label>
-              <textarea class="form-control" id="taComentariosEfectivo" rows="2" maxlength="1000" placeholder="Detalle adicional..."></textarea>
-            </div>
-
-            <!-- FOTO TICKET / FACTURA -->
-            <div class="mb-4">
-              <label class="form-label fw-bold text-secondary"><i class="bi bi-receipt me-1 text-primary"></i>Foto Ticket / Factura</label>
-              <input type="file" class="d-none" id="fileCamFactura" accept="image/jpeg,image/png,image/webp" capture="environment" onchange="app.handlers.onFotoSelected(this, 'factura')">
-              <input type="file" class="d-none" id="fileGalFactura" accept="image/jpeg,image/png,image/webp" onchange="app.handlers.onFotoSelected(this, 'factura')">
-              
-              <div class="d-flex gap-2 mb-2">
-                <button type="button" class="btn btn-outline-primary btn-sm flex-fill" onclick="document.getElementById('fileCamFactura').click()"><i class="bi bi-camera me-1"></i>Hacer Foto</button>
-                <button type="button" class="btn btn-outline-secondary btn-sm flex-fill" onclick="document.getElementById('fileGalFactura').click()"><i class="bi bi-images me-1"></i>Galería</button>
-              </div>
-
-              <div class="preview-container" id="boxPreviewFactura">
-                <img id="imgPreviewFactura" class="d-none" alt="Preview ticket">
-                <span class="text-muted small" id="lblPlaceholderFactura">Sin captura de ticket</span>
-              </div>
-              <span class="img-meta-badge text-muted text-center" id="metaFactura"></span>
-            </div>
-
-            <button type="submit" class="btn btn-success w-100 py-3 text-white fs-5" id="btnGuardarEfectivo">
-              <i class="bi bi-check-circle-fill me-2"></i>Registrar Movimiento
-            </button>
-          </form>
-
-          <div class="mt-4">
-            <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-clock-history me-1"></i>Últimos Movimientos Registrados</h6>
-            <div class="list-group" id="listaUltimosMovimientos">
-              <div class="list-group-item text-center text-muted small py-3">No hay movimientos recientes</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ========================================== -->
-        <!-- MÓDULO 3: MI FURGÓN (STOCK CON DETALLES)   -->
-        <!-- ========================================== -->
-        <div class="d-none" id="moduleFurgon">
-          
-          <!-- TABLA DE STOCK CON CATEGORÍA, NOMBRE Y UNIDAD -->
-          <div class="card bg-light border mb-4">
-            <div class="card-body p-3">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-box-seam me-1 text-primary"></i>Stock Actual en mi Furgón</h6>
-                <button class="btn btn-sm btn-outline-primary" type="button" onclick="app.actions.cargarStockFurgon()"><i class="bi bi-arrow-clockwise"></i></button>
-              </div>
-              <div class="table-responsive">
-                <table class="table table-sm table-hover mb-0">
-                  <thead class="table-dark">
-                    <tr>
-                      <th>Material / Categoría</th>
-                      <th class="text-end">Cantidad</th>
-                    </tr>
-                  </thead>
-                  <tbody id="tbodyStockFurgon">
-                    <tr><td colspan="2" class="text-center text-muted small py-2">Cargando existencias...</td></tr>
-                  </tbody>
-                </table>
+                <small class="d-block text-center mt-1 text-success fw-bold" id="metaAlbaran"></small>
               </div>
             </div>
           </div>
 
-          <!-- REGISTRO DE TRASPASO -->
-          <div class="card border mb-3">
-            <div class="card-header bg-white fw-bold">
-              <i class="bi bi-arrow-left-right me-1 text-primary"></i>Cargar o Devolver Material
-            </div>
-            <div class="card-body p-3">
-              <div class="alert alert-danger d-none" id="alertFurgon" role="alert"></div>
-              <div class="alert alert-success d-none" id="alertSuccessFurgon" role="alert"></div>
-
-              <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)" novalidate>
-                <div class="mb-2">
-                  <label class="form-label small fw-bold text-secondary">Acción *</label>
-                  <select class="form-select" id="selTipoTraspaso" required>
-                    <option value="CARGA">CARGAR de Central ➔ Furgón</option>
-                    <option value="DESCARGA">DEVOLVER de Furgón ➔ Central</option>
-                  </select>
-                </div>
-
-                <div class="row g-2 mb-2">
-                  <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">1. Categoría *</label>
-                    <select class="form-select" id="selCatMatFurgon" onchange="app.handlers.onCatMatFurgonChange()" required>
-                      <option value="">-- Seleccionar Categoría --</option>
-                    </select>
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">2. Material *</label>
-                    <select class="form-select" id="selMatFurgon" required disabled>
-                      <option value="">-- Seleccionar Material --</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div class="row g-2 mb-3">
-                  <div class="col-md-4">
-                    <label class="form-label small fw-bold text-secondary">Cantidad *</label>
-                    <input type="number" step="1" min="1" class="form-control" id="txtCantidadFurgon" placeholder="0" required>
-                  </div>
-                  <div class="col-md-8">
-                    <label class="form-label small fw-bold text-secondary">Observaciones</label>
-                    <input type="text" class="form-control" id="txtObsFurgon" placeholder="Motivo o detalle...">
-                  </div>
-                </div>
-
-                <button type="submit" class="btn btn-primary-custom w-100 py-2 text-white" id="btnGuardarFurgon">
-                  Registrar Movimiento de Furgón
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <!-- HISTORIAL DE TRASPASOS -->
-          <h6 class="fw-bold text-secondary mb-2 small"><i class="bi bi-clock-history me-1"></i>Últimos Traspasos</h6>
-          <div class="list-group" id="listaUltimosMovsFurgon">
-            <div class="list-group-item text-center text-muted small py-2">Sin movimientos</div>
-          </div>
-
-        </div>
-
+          <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5 submit-btn" id="btnGuardarIntervencion">
+            <i class="bi bi-send-check-fill me-2"></i>Enviar Parte de Trabajo
+          </button>
+        </form>
       </div>
-    </div>
 
+      <!-- MÓDULO 2: EFECTIVO -->
+      <div id="moduleEfectivo" class="d-none px-2 pb-5">
+        <div class="wallet-card mb-4 shadow-sm">
+          <small class="text-white-50 text-uppercase fw-bold"><i class="bi bi-piggy-bank me-1"></i>Saldo en Caja</small>
+          <h1 class="display-4 fw-bold my-1" id="lblSaldoEfectivo">0,00 €</h1>
+        </div>
+
+        <div class="card card-custom p-3 mb-4">
+          <h6 class="fw-bold text-primary mb-3">Registrar Gasto / Ingreso</h6>
+          <form id="formEfectivo" onsubmit="app.actions.handleGuardarEfectivo(event)">
+            <input type="date" class="form-control mb-3" id="txtFechaEfectivo" required>
+            <select class="form-select mb-3" id="selTipoEfectivo" required>
+              <option value="GASTO">🔴 GASTO (Pagué en tienda/gasolina)</option>
+              <option value="INGRESO">🟢 INGRESO (Recibí efectivo)</option>
+            </select>
+            
+            <div class="input-group mb-3">
+              <span class="input-group-text fw-bold text-success bg-light">€</span>
+              <input type="number" step="0.01" class="form-control form-control-lg fw-bold" id="txtImporteEfectivo" placeholder="Importe total" required>
+            </div>
+
+            <input type="text" class="form-control mb-3" id="txtProveedorEfectivo" placeholder="Proveedor (Ej. Obramat, Repsol)" required>
+            <input type="text" class="form-control mb-3" id="txtConceptoEfectivo" placeholder="Concepto del ticket" required>
+            <textarea class="form-control mb-3" id="taComentariosEfectivo" rows="2" placeholder="Notas extra (opcional)"></textarea>
+
+            <label class="small fw-bold mb-2 d-block">Foto del Ticket / Factura</label>
+            <input type="file" class="d-none" id="fileCamFactura" accept="image/*" capture="environment" onchange="app.handlers.onFotoSelected(this, 'factura')">
+            <input type="file" class="d-none" id="fileGalFactura" accept="image/*" onchange="app.handlers.onFotoSelected(this, 'factura')">
+            <div class="d-flex gap-2 mb-2">
+              <button type="button" class="btn btn-outline-dark flex-fill" onclick="document.getElementById('fileCamFactura').click()"><i class="bi bi-camera"></i> Cámara</button>
+              <button type="button" class="btn btn-outline-dark flex-fill" onclick="document.getElementById('fileGalFactura').click()"><i class="bi bi-image"></i> Galería</button>
+            </div>
+            <div class="preview-container" id="boxPreviewFactura">
+              <img id="imgPreviewFactura" class="d-none">
+              <small class="text-muted" id="lblPlaceholderFactura">Ticket sin adjuntar</small>
+            </div>
+            <small class="d-block text-center mt-1 text-success fw-bold mb-3" id="metaFactura"></small>
+
+            <button type="submit" class="btn btn-success w-100 py-3 text-white fs-5 submit-btn" id="btnGuardarEfectivo">
+              <i class="bi bi-check2-circle me-1"></i>Guardar Movimiento
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- MÓDULO 3: MI FURGÓN -->
+      <div id="moduleFurgon" class="d-none px-2 pb-5">
+        <div class="card card-custom mb-3 border-primary">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-truck me-1"></i>Inventario en Vehículo</h6>
+            <button class="btn btn-sm btn-light border rounded-pill" onclick="app.actions.cargarStockFurgon()"><i class="bi bi-arrow-clockwise"></i> Refrescar</button>
+          </div>
+          <div class="table-responsive p-0 m-0">
+            <table class="table table-borderless table-striped mb-0">
+              <tbody id="tbodyStockFurgon"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card card-custom p-3 mb-4 bg-light border">
+          <h6 class="fw-bold text-dark mb-3"><i class="bi bi-box-arrow-in-down me-1"></i>Cargar Furgón desde Almacén</h6>
+          <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)">
+            <select class="form-select mb-2" id="selTipoTraspaso" required>
+              <option value="CARGA">📥 Me llevo material de la Central</option>
+              <option value="DESCARGA">📤 Devuelvo material a la Central</option>
+            </select>
+            <select class="form-select mb-2" id="selCatMatFurgon" onchange="app.handlers.onCatMatFurgonChange()" required>
+              <option value="">-- 1. Filtrar Categoría --</option>
+            </select>
+            <select class="form-select mb-3" id="selMatFurgon" required disabled>
+              <option value="">-- 2. Elegir Pieza --</option>
+            </select>
+            
+            <div class="row g-2 mb-3">
+              <div class="col-4">
+                <input type="number" step="1" min="1" class="form-control text-center fw-bold" id="txtCantidadFurgon" placeholder="Cant." required>
+              </div>
+              <div class="col-8">
+                <input type="text" class="form-control" id="txtObsFurgon" placeholder="Observaciones (Opcional)">
+              </div>
+            </div>
+            
+            <button type="submit" class="btn btn-dark w-100 py-2 submit-btn" id="btnGuardarFurgon">Confirmar Traspaso</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- BOTTOM APP BAR (FIJA ABAJO) -->
+      <div class="bottom-nav d-none" id="bottomNav">
+        <div class="nav-item-bottom active" id="nav-mantenimiento" onclick="app.ui.switchModule('mantenimiento')">
+          <i class="bi bi-tools"></i>Partes
+        </div>
+        <div class="nav-item-bottom" id="nav-efectivo" onclick="app.ui.switchModule('efectivo')">
+          <i class="bi bi-wallet2"></i>Cartera
+        </div>
+        <div class="nav-item-bottom" id="nav-furgon" onclick="app.ui.switchModule('furgon')">
+          <i class="bi bi-truck"></i>Furgón
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <script>
     const app = {
       config: {
-        apiUrl: "https://script.google.com/macros/s/AKfycbzR4JZt4NSn15lQa3e6799xDa55pYq5ECner-vX3BtcNwcwQHJLlfC5ZrsXsWTZTEX9/exec",
-        version: "2.5.0",
-        maxFileRawBytes: 12582912,
-        maxFinalBytes: 819200,
-        timeoutMs: 50000
+        // === ACTUALIZA AQUÍ TU URL /exec ===
+        apiUrl: "https://script.google.com/macros/s/AKfycbwa2bnIPdqgWcgqgCfmJ11rT6iIzrSUyyZYuWhKzC5TiYaezkKHkBFJszDgpiFbUuns/exec",
+        maxFileRawBytes: 12582912, maxFinalBytes: 819200, timeoutMs: 45000
       },
 
-      state: {
-        token: null,
-        tecnico: null,
-        usuario: null,
-        dbRutas: {},
-        dbCatalogo: {},
-        catalogoMap: {},
-        idempotencyMantenimiento: null,
-        idempotencyEfectivo: null,
-        idempotencyFurgon: null,
-        fotos: {
-          equipo: { base64: '', bytes: 0 },
-          albaran: { base64: '', bytes: 0 },
-          factura: { base64: '', bytes: 0 }
-        }
+      state: { token: null, tecnico: null, usuario: null, dbRutas: {}, dbCatalogo: {}, catalogoMap: {},
+        idempotency: { mantenimiento: null, efectivo: null, furgon: null },
+        fotos: { equipo: { base64: ''}, albaran: { base64: ''}, factura: { base64: ''} },
+        formDirty: false
       },
 
       ui: {
-        setLoader(show, mainText = 'Cargando...', subText = 'Por favor, espere') {
-          const el = document.getElementById('loaderOverlay');
-          document.getElementById('loaderStatusText').textContent = mainText;
-          document.getElementById('loaderSubText').textContent = subText;
-          el.style.display = show ? 'flex' : 'none';
+        setLoader(show, text = 'Procesando...') {
+          document.getElementById('loaderOverlay').style.display = show ? 'flex' : 'none';
+          document.getElementById('loaderStatusText').textContent = text;
         },
-
-        showAlert(elementId, msg) {
-          const el = document.getElementById(elementId);
-          if (msg) {
-            el.textContent = msg;
-            el.classList.remove('d-none');
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-          } else {
-            el.textContent = '';
-            el.classList.add('d-none');
-          }
+        showToast(msg, type = 'success') {
+          const tC = document.getElementById('toastContainer');
+          const toast = document.createElement('div');
+          toast.className = `toast align-items-center text-bg-${type} border-0 show mb-2 shadow`;
+          toast.innerHTML = `<div class="d-flex"><div class="toast-body fw-bold">${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button></div>`;
+          tC.appendChild(toast);
+          setTimeout(() => toast.remove(), 4000);
         },
-
-        limpiarSelect(selectElem, defaultTxt) {
-          while (selectElem.firstChild) selectElem.removeChild(selectElem.firstChild);
-          const opt = document.createElement('option');
-          opt.value = '';
-          opt.textContent = defaultTxt;
-          selectElem.appendChild(opt);
+        limpiarSelect(el, text) {
+          el.innerHTML = `<option value="">${text}</option>`;
         },
-
         switchModule(modulo) {
-          const tabMant = document.getElementById('tab-mantenimiento');
-          const tabEf = document.getElementById('tab-efectivo');
-          const tabFur = document.getElementById('tab-furgon');
-          
-          const modMant = document.getElementById('moduleMantenimiento');
-          const modEf = document.getElementById('moduleEfectivo');
-          const modFur = document.getElementById('moduleFurgon');
-
-          [tabMant, tabEf, tabFur].forEach(t => t.classList.remove('active'));
-          [modMant, modEf, modFur].forEach(m => m.classList.add('d-none'));
-
-          if (modulo === 'mantenimiento') {
-            tabMant.classList.add('active');
-            modMant.classList.remove('d-none');
-          } else if (modulo === 'efectivo') {
-            tabEf.classList.add('active');
-            modEf.classList.remove('d-none');
-            app.actions.cargarSaldoEfectivo();
-          } else if (modulo === 'furgon') {
-            tabFur.classList.add('active');
-            modFur.classList.remove('d-none');
-            app.actions.cargarStockFurgon();
-          }
+          ['mantenimiento', 'efectivo', 'furgon'].forEach(m => {
+            document.getElementById('nav-' + m).classList.remove('active');
+            document.getElementById('module' + m.charAt(0).toUpperCase() + m.slice(1)).classList.add('d-none');
+          });
+          document.getElementById('nav-' + modulo).classList.add('active');
+          document.getElementById('module' + modulo.charAt(0).toUpperCase() + modulo.slice(1)).classList.remove('d-none');
+          if(modulo === 'efectivo') app.actions.cargarSaldoEfectivo();
+          if(modulo === 'furgon') app.actions.cargarStockFurgon();
         }
       },
 
-      imgEngine: {
-        async comprimirImagen(file) {
-          if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-            throw new Error('Tipo de archivo no permitido. Seleccione JPEG, PNG o WebP.');
+      utils: {
+        async compress(file) {
+          const bmp = await createImageBitmap(file);
+          let w = bmp.width, h = bmp.height, max = 1600, q = 0.78;
+          if (w > max || h > max) { if (w > h) { h = Math.round(h*max/w); w = max; } else { w = Math.round(w*max/h); h = max; } }
+          const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d', { alpha: false }); ctx.drawImage(bmp, 0, 0, w, h);
+          let blob;
+          for (let i = 0; i < 4; i++) {
+            blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', q));
+            if (blob.size <= app.config.maxFinalBytes) break;
+            q -= 0.15; canvas.width *= 0.85; canvas.height *= 0.85; ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
           }
-
-          if (file.size > app.config.maxFileRawBytes) {
-            throw new Error(`Archivo demasiado grande (${(file.size / 1048576).toFixed(1)} MB). Máximo: 12 MB.`);
-          }
-
-          const originalSizeKb = Math.round(file.size / 1024);
-          const imageBitmap = await createImageBitmap(file);
-
-          let maxDim = 1600;
-          let calidad = 0.78;
-          let width = imageBitmap.width;
-          let height = imageBitmap.height;
-
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d', { alpha: false });
-          canvas.width = width;
-          canvas.height = height;
-          ctx.drawImage(imageBitmap, 0, 0, width, height);
-
-          let blob = null;
-          for (let intento = 0; intento < 4; intento++) {
-            blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', calidad));
-            if (blob.size <= app.config.maxFinalBytes || calidad <= 0.45) break;
-            calidad -= 0.12;
-            if (blob.size > app.config.maxFinalBytes * 1.5) {
-              canvas.width = Math.round(canvas.width * 0.85);
-              canvas.height = Math.round(canvas.height * 0.85);
-              ctx.drawImage(imageBitmap, 0, 0, canvas.width, canvas.height);
-            }
-          }
-
-          imageBitmap.close();
-
-          const finalSizeKb = Math.round(blob.size / 1024);
-          const base64 = await new Promise(resolve => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.readAsDataURL(blob);
-          });
-
-          return {
-            base64: base64,
-            bytes: blob.size,
-            metaString: `${originalSizeKb} KB ➔ ${finalSizeKb} KB`
-          };
+          bmp.close();
+          const b64 = await new Promise(r => { const rd = new FileReader(); rd.onloadend = ()=>r(rd.result); rd.readAsDataURL(blob); });
+          return { base64: b64, sizeMsg: `${Math.round(file.size/1024)}KB ➔ ${Math.round(blob.size/1024)}KB` };
+        },
+        generarIdem(tipo) {
+          const arr = new Uint8Array(16); crypto.getRandomValues(arr);
+          app.state.idempotency[tipo] = 'IDEM_' + Array.from(arr, b=>('0'+b.toString(16)).slice(-2)).join('');
         }
       },
 
       api: {
-        async request(accion, payloadExtra = {}, maxRetries = 2) {
-          const bodyData = JSON.stringify({ accion: accion, ...payloadExtra });
-          let delay = 1500;
-
-          for (let intento = 0; intento <= maxRetries; intento++) {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), app.config.timeoutMs);
-
+        async req(accion, payload = {}) {
+          if (!navigator.onLine) {
+            app.ui.showToast('Sin conexión a Internet. Espere a recuperar la red.', 'danger');
+            throw new Error('OFFLINE');
+          }
+          const body = JSON.stringify({ accion, ...payload });
+          for (let i = 0; i <= 2; i++) {
+            const ctrl = new AbortController();
+            const tid = setTimeout(() => ctrl.abort(), app.config.timeoutMs);
             try {
-              const res = await fetch(app.config.apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: bodyData,
-                redirect: 'follow',
-                signal: controller.signal
-              });
-
-              clearTimeout(timeoutId);
-              if (!res.ok) throw new Error(`HTTP Error ${res.status}`);
-              return await res.json();
-
-            } catch (err) {
-              clearTimeout(timeoutId);
-              if (intento === maxRetries) {
-                return { success: false, error: 'Error de comunicación con el servidor.' };
-              }
-              await new Promise(r => setTimeout(r, delay));
-              delay *= 2;
+              const res = await fetch(app.config.apiUrl, { method: 'POST', headers: {'Content-Type': 'text/plain'}, body, signal: ctrl.signal });
+              clearTimeout(tid); if(!res.ok) throw new Error('HTTP ' + res.status); return await res.json();
+            } catch (e) {
+              clearTimeout(tid); if(i === 2) { app.ui.showToast('Error de servidor. Reintente.', 'danger'); throw e; }
+              await new Promise(r => setTimeout(r, 1000 * Math.pow(2, i)));
             }
           }
         }
@@ -667,523 +371,155 @@
 
       handlers: {
         async onFotoSelected(input, tipo) {
+          app.state.formDirty = true;
           const file = input.files[0];
-          const capTipo = tipo.charAt(0).toUpperCase() + tipo.slice(1);
-          const previewImg = document.getElementById(`imgPreview${capTipo}`);
-          const placeholder = document.getElementById(`lblPlaceholder${capTipo}`);
-          const metaBadge = document.getElementById(`meta${capTipo}`);
-
-          if (!file) {
-            app.state.fotos[tipo] = { base64: '', bytes: 0 };
-            previewImg.src = '';
-            previewImg.classList.add('d-none');
-            placeholder.classList.remove('d-none');
-            metaBadge.textContent = '';
-            return;
-          }
-
-          app.ui.setLoader(true, 'Comprimiendo fotografía...', 'Optimizando resolución');
-
+          const cap = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+          if(!file){ document.getElementById('imgPreview'+cap).classList.add('d-none'); document.getElementById('lblPlaceholder'+cap).classList.remove('d-none'); return; }
+          app.ui.setLoader(true, 'Comprimiendo...');
           try {
-            const result = await app.imgEngine.comprimirImagen(file);
-            app.state.fotos[tipo] = { base64: result.base64, bytes: result.bytes };
-
-            previewImg.src = result.base64;
-            previewImg.classList.remove('d-none');
-            placeholder.classList.add('d-none');
-            metaBadge.textContent = `Optimizado: ${result.metaString}`;
-            metaBadge.className = 'img-meta-badge text-success text-center';
-          } catch (err) {
-            input.value = '';
-            app.state.fotos[tipo] = { base64: '', bytes: 0 };
-            previewImg.classList.add('d-none');
-            placeholder.classList.remove('d-none');
-            metaBadge.textContent = 'Error de compresión';
-            metaBadge.className = 'img-meta-badge text-danger text-center';
-            alert(err.message || 'Error al procesar la fotografía.');
-          } finally {
-            app.ui.setLoader(false);
-          }
+            const res = await app.utils.compress(file);
+            app.state.fotos[tipo].base64 = res.base64;
+            document.getElementById('imgPreview'+cap).src = res.base64;
+            document.getElementById('imgPreview'+cap).classList.remove('d-none');
+            document.getElementById('lblPlaceholder'+cap).classList.add('d-none');
+            document.getElementById('meta'+cap).textContent = `✔ OK (${res.sizeMsg})`;
+          } catch(e) { app.ui.showToast('Error al procesar foto', 'danger'); } finally { app.ui.setLoader(false); }
         },
-
         onEmpresaChange() {
-          const empresa = document.getElementById('selEmpresa').value;
-          const selLocal = document.getElementById('selLocal');
-          const selEquipo = document.getElementById('selEquipo');
-          document.getElementById('txtModeloEquipo').value = '';
-
-          app.ui.limpiarSelect(selLocal, '-- Seleccionar Local --');
-          app.ui.limpiarSelect(selEquipo, '-- Seleccionar Equipo --');
-          selEquipo.disabled = true;
-
-          if (empresa && app.state.dbRutas[empresa]) {
-            Object.keys(app.state.dbRutas[empresa]).sort().forEach(loc => {
-              const opt = document.createElement('option');
-              opt.value = loc;
-              opt.textContent = loc;
-              selLocal.appendChild(opt);
-            });
-            selLocal.disabled = false;
-          } else {
-            selLocal.disabled = true;
-          }
+          app.state.formDirty = true;
+          const emp = document.getElementById('selEmpresa').value, sL = document.getElementById('selLocal'), sE = document.getElementById('selEquipo');
+          app.ui.limpiarSelect(sL, '-- 2. Local / Sede --'); app.ui.limpiarSelect(sE, '-- 3. Equipo --'); sE.disabled = true; document.getElementById('txtModeloEquipo').value='';
+          if(emp && app.state.dbRutas[emp]){ Object.keys(app.state.dbRutas[emp]).sort().forEach(l => sL.innerHTML += `<option value="${l}">${l}</option>`); sL.disabled=false; } else sL.disabled=true;
         },
-
         onLocalChange() {
-          const empresa = document.getElementById('selEmpresa').value;
-          const local = document.getElementById('selLocal').value;
-          const selEquipo = document.getElementById('selEquipo');
-          document.getElementById('txtModeloEquipo').value = '';
-
-          app.ui.limpiarSelect(selEquipo, '-- Seleccionar Equipo --');
-
-          if (empresa && local && app.state.dbRutas[empresa][local]) {
-            app.state.dbRutas[empresa][local].forEach(eq => {
-              const opt = document.createElement('option');
-              opt.value = eq.idEquipo;
-              opt.textContent = `${eq.idEquipo} (${eq.modelo})`;
-              opt.setAttribute('data-modelo', eq.modelo);
-              selEquipo.appendChild(opt);
-            });
-            selEquipo.disabled = false;
-          } else {
-            selEquipo.disabled = true;
-          }
+          const emp = document.getElementById('selEmpresa').value, loc = document.getElementById('selLocal').value, sE = document.getElementById('selEquipo');
+          app.ui.limpiarSelect(sE, '-- 3. Equipo --'); document.getElementById('txtModeloEquipo').value='';
+          if(loc && app.state.dbRutas[emp][loc]){ app.state.dbRutas[emp][loc].forEach(eq => sE.innerHTML += `<option value="${eq.idEquipo}" data-mod="${eq.modelo}">${eq.idEquipo} (${eq.modelo})</option>`); sE.disabled=false; } else sE.disabled=true;
         },
-
         onEquipoChange() {
-          const sel = document.getElementById('selEquipo');
-          const opt = sel.options[sel.selectedIndex];
-          document.getElementById('txtModeloEquipo').value = opt ? (opt.getAttribute('data-modelo') || '') : '';
+          const opt = document.getElementById('selEquipo').selectedOptions[0]; document.getElementById('txtModeloEquipo').value = opt ? opt.getAttribute('data-mod') : '';
         },
-
         onCatMatFurgonChange() {
-          const cat = document.getElementById('selCatMatFurgon').value;
-          const selMat = document.getElementById('selMatFurgon');
-          app.ui.limpiarSelect(selMat, '-- Seleccionar Material --');
-
-          if (cat && app.state.dbCatalogo[cat]) {
-            app.state.dbCatalogo[cat].forEach(m => {
-              const opt = document.createElement('option');
-              opt.value = m.id;
-              opt.textContent = `${m.id} - ${m.nombre} (${m.unidad})`;
-              selMat.appendChild(opt);
-            });
-            selMat.disabled = false;
-          } else {
-            selMat.disabled = true;
-          }
+          const cat = document.getElementById('selCatMatFurgon').value, sM = document.getElementById('selMatFurgon');
+          app.ui.limpiarSelect(sM, '-- 2. Elegir Pieza --');
+          if(cat && app.state.dbCatalogo[cat]){ app.state.dbCatalogo[cat].forEach(m => sM.innerHTML += `<option value="${m.id}">${m.nombre} (${m.unidad})</option>`); sM.disabled=false; } else sM.disabled=true;
         },
-
         agregarFilaMaterial() {
-          const contenedor = document.getElementById('contenedorMaterialesUsados');
-          const rowId = 'mat_row_' + Date.now();
-          const row = document.createElement('div');
-          row.className = 'mat-row';
-          row.id = rowId;
-
-          row.innerHTML = `
-            <div class="row g-2 mb-2">
-              <div class="col-md-6">
-                <select class="form-select form-select-sm sel-cat-item">
-                  <option value="">-- Categoría --</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <select class="form-select form-select-sm sel-mat-item" disabled>
-                  <option value="">-- Material --</option>
-                </select>
-              </div>
-            </div>
-            <div class="d-flex gap-2">
-              <input type="number" step="1" min="1" class="form-control form-control-sm txt-cant-item" placeholder="Cantidad" style="max-width: 140px;">
-              <button type="button" class="btn btn-sm btn-outline-danger" onclick="document.getElementById('${rowId}').remove()"><i class="bi bi-trash"></i> Eliminar</button>
-            </div>
+          app.state.formDirty = true;
+          const div = document.createElement('div'); div.className = 'mat-row';
+          const rId = 'r_'+Date.now(); div.id = rId;
+          
+          let cats = '<option value="">-- Categoría --</option>';
+          Object.keys(app.state.dbCatalogo).sort().forEach(c => cats += `<option value="${c}">${c}</option>`);
+          
+          div.innerHTML = `
+            <div class="row g-2 mb-2"><div class="col-12"><select class="form-select sel-cat" onchange="app.handlers.llenarMatRow(this)">${cats}</select></div>
+            <div class="col-12"><select class="form-select sel-mat" disabled><option value="">-- Repuesto exacto --</option></select></div></div>
+            <div class="d-flex gap-2"><input type="number" class="form-control txt-qty" placeholder="Cantidad usada" min="1"><button type="button" class="btn btn-outline-danger" onclick="document.getElementById('${rId}').remove()"><i class="bi bi-trash"></i></button></div>
           `;
-
-          contenedor.appendChild(row);
-
-          // Llenar categorías
-          const selCat = row.querySelector('.sel-cat-item');
-          const selMat = row.querySelector('.sel-mat-item');
-
-          Object.keys(app.state.dbCatalogo).sort().forEach(c => {
-            const opt = document.createElement('option');
-            opt.value = c;
-            opt.textContent = c;
-            selCat.appendChild(opt);
-          });
-
-          selCat.addEventListener('change', () => {
-            const catSelected = selCat.value;
-            app.ui.limpiarSelect(selMat, '-- Material --');
-            if (catSelected && app.state.dbCatalogo[catSelected]) {
-              app.state.dbCatalogo[catSelected].forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.id;
-                opt.textContent = `${m.id} - ${m.nombre} (${m.unidad})`;
-                selMat.appendChild(opt);
-              });
-              selMat.disabled = false;
-            } else {
-              selMat.disabled = true;
-            }
-          });
+          document.getElementById('contenedorMaterialesUsados').appendChild(div);
+        },
+        llenarMatRow(selCat) {
+          const cat = selCat.value, sM = selCat.parentElement.parentElement.querySelector('.sel-mat');
+          app.ui.limpiarSelect(sM, '-- Repuesto exacto --');
+          if(cat && app.state.dbCatalogo[cat]){ app.state.dbCatalogo[cat].forEach(m => sM.innerHTML += `<option value="${m.id}">${m.nombre} (${m.unidad})</option>`); sM.disabled=false; } else sM.disabled=true;
         }
       },
 
       actions: {
         async handleLogin(e) {
-          e.preventDefault();
-          const u = document.getElementById('inputUser').value.trim();
-          const p = document.getElementById('inputPass').value.trim();
-
-          app.ui.showAlert('alertLogin', null);
-          if (!u || !p) {
-            app.ui.showAlert('alertLogin', 'Ingrese su usuario y contraseña.');
-            return;
-          }
-
-          app.ui.setLoader(true, 'Autenticando...', 'Verificando credenciales');
-          document.getElementById('btnLoginSubmit').disabled = true;
-
-          const res = await app.api.request('login', { usuario: u, clave: p });
-          app.ui.setLoader(false);
-          document.getElementById('btnLoginSubmit').disabled = false;
-
-          if (res.success) {
-            app.state.token = res.token;
-            app.state.tecnico = res.tecnico;
-            app.state.usuario = res.usuario;
-
-            sessionStorage.setItem('BK_AUTH_TOKEN', res.token);
-            sessionStorage.setItem('BK_AUTH_TECNICO', res.tecnico);
-            sessionStorage.setItem('BK_AUTH_USER', res.usuario);
-
-            document.getElementById('inputPass').value = '';
-            app.actions.iniciarSesionUI();
-          } else {
-            app.ui.showAlert('alertLogin', res.error || 'Credenciales incorrectas.');
-          }
+          e.preventDefault(); const u = document.getElementById('inputUser').value, p = document.getElementById('inputPass').value;
+          app.ui.setLoader(true, 'Verificando...');
+          try {
+            const res = await app.api.req('login', {usuario: u, clave: p});
+            if(res.success){
+              sessionStorage.setItem('T', res.token); sessionStorage.setItem('TE', res.tecnico); sessionStorage.setItem('US', res.usuario);
+              app.state.token = res.token; app.state.tecnico = res.tecnico; app.state.usuario = res.usuario;
+              app.actions.boot();
+            } else app.ui.showToast(res.error, 'danger');
+          } catch(e){} finally { app.ui.setLoader(false); }
         },
-
-        async handleLogout() {
-          if (app.state.token) {
-            app.ui.setLoader(true, 'Cerrando sesión...', 'Finalizando sesión');
-            await app.api.request('logout', { token: app.state.token });
-          }
-          sessionStorage.clear();
-          location.reload();
+        handleLogout() { sessionStorage.clear(); location.reload(); },
+        async boot() {
+          document.getElementById('viewLogin').classList.add('d-none'); document.getElementById('viewMain').classList.remove('d-none'); document.getElementById('bottomNav').classList.remove('d-none');
+          document.getElementById('labelTecnicoSesion').textContent = app.state.tecnico; document.getElementById('labelUserCode').textContent = app.state.usuario;
+          document.getElementById('txtTecnicoNombre').value = app.state.tecnico; document.getElementById('txtFecha').valueAsDate = new Date(); document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
+          app.ui.setLoader(true, 'Sincronizando BD...');
+          try {
+            const [rE, rC] = await Promise.all([app.api.req('obtenerEquipos', {token: app.state.token}), app.api.req('obtenerCatalogoMateriales', {token: app.state.token})]);
+            if(rE.success) { app.state.dbRutas = rE.datos; const sE = document.getElementById('selEmpresa'); Object.keys(rE.datos).sort().forEach(e => sE.innerHTML+=`<option value="${e}">${e}</option>`); }
+            if(rC.success) { app.state.dbCatalogo = rC.catalogo; Object.keys(rC.catalogo).forEach(c => rC.catalogo[c].forEach(m => app.state.catalogoMap[m.id] = {nom:m.nombre, cat:c, uni:m.unidad})); 
+              const sCF = document.getElementById('selCatMatFurgon'); Object.keys(rC.catalogo).sort().forEach(c => sCF.innerHTML+=`<option value="${c}">${c}</option>`);
+            }
+          } catch(e){} finally { app.ui.setLoader(false); }
         },
-
-        async iniciarSesionUI() {
-          document.getElementById('txtTecnicoNombre').value = app.state.tecnico;
-          document.getElementById('labelTecnicoSesion').textContent = app.state.tecnico;
-          document.getElementById('labelUserCode').textContent = `Usuario: ${app.state.usuario}`;
-          document.getElementById('viewLogin').classList.add('d-none');
-          document.getElementById('viewMain').classList.remove('d-none');
-
-          await app.actions.cargarRutas();
-          await app.actions.cargarCatalogoMateriales();
-          await app.actions.cargarSaldoEfectivo();
-        },
-
-        async cargarRutas() {
-          const res = await app.api.request('obtenerEquipos', { token: app.state.token });
-          if (res.success) {
-            app.state.dbRutas = res.datos || {};
-            const selEmpresa = document.getElementById('selEmpresa');
-            app.ui.limpiarSelect(selEmpresa, '-- Seleccionar Empresa --');
-            Object.keys(app.state.dbRutas).sort().forEach(emp => {
-              const opt = document.createElement('option');
-              opt.value = emp;
-              opt.textContent = emp;
-              selEmpresa.appendChild(opt);
-            });
-          }
-        },
-
-        async cargarCatalogoMateriales() {
-          const res = await app.api.request('obtenerCatalogoMateriales', { token: app.state.token });
-          if (res.success) {
-            app.state.dbCatalogo = res.catalogo || {};
-            app.state.catalogoMap = {};
-
-            // Mapeo rápido ID -> Detalle para mostrar en el furgón
-            Object.keys(app.state.dbCatalogo).forEach(cat => {
-              app.state.dbCatalogo[cat].forEach(m => {
-                app.state.catalogoMap[m.id.toUpperCase()] = {
-                  nombre: m.nombre,
-                  categoria: cat,
-                  unidad: m.unidad
-                };
-              });
-            });
-
-            const selCatFurgon = document.getElementById('selCatMatFurgon');
-            app.ui.limpiarSelect(selCatFurgon, '-- Seleccionar Categoría --');
-
-            Object.keys(app.state.dbCatalogo).sort().forEach(cat => {
-              const opt = document.createElement('option');
-              opt.value = cat;
-              opt.textContent = cat;
-              selCatFurgon.appendChild(opt);
-            });
-          }
-        },
-
         async cargarSaldoEfectivo() {
-          const res = await app.api.request('obtenerSaldoEfectivo', { token: app.state.token });
-          if (res.success) {
-            const saldoFormatted = (parseFloat(res.saldo) || 0).toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            document.getElementById('lblSaldoEfectivo').textContent = `${saldoFormatted} €`;
-
-            const lista = document.getElementById('listaUltimosMovimientos');
-            while (lista.firstChild) lista.removeChild(lista.firstChild);
-
-            if (res.ultimosMovimientos && res.ultimosMovimientos.length > 0) {
-              res.ultimosMovimientos.forEach(m => {
-                const item = document.createElement('div');
-                item.className = 'list-group-item d-flex justify-content-between align-items-center py-2';
-                const isIngreso = m.tipo === 'INGRESO';
-                const colorBadge = isIngreso ? 'text-success' : 'text-danger';
-                const signo = isIngreso ? '+' : '-';
-                
-                item.innerHTML = `
-                  <div>
-                    <div class="fw-bold small">${m.concepto}</div>
-                    <small class="text-muted">${m.fecha} | ${m.proveedor}</small>
-                  </div>
-                  <span class="fw-bold ${colorBadge}">${signo}${parseFloat(m.importe).toFixed(2)} €</span>
-                `;
-                lista.appendChild(item);
-              });
-            } else {
-              lista.innerHTML = '<div class="list-group-item text-center text-muted small py-3">No hay movimientos registrados</div>';
-            }
-          }
+          try { const res = await app.api.req('obtenerSaldoEfectivo', {token: app.state.token}); if(res.success){ document.getElementById('lblSaldoEfectivo').textContent = parseFloat(res.saldo).toFixed(2)+' €'; } } catch(e){}
         },
-
         async cargarStockFurgon() {
-          const res = await app.api.request('obtenerStockFurgon', { token: app.state.token });
-          if (res.success) {
-            const tbody = document.getElementById('tbodyStockFurgon');
-            while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
-
-            const keys = Object.keys(res.stock || {});
-            if (keys.length > 0) {
-              keys.sort().forEach(idMat => {
-                const tr = document.createElement('tr');
-                const info = app.state.catalogoMap[idMat.toUpperCase()] || { nombre: idMat, categoria: 'Varios', unidad: 'uds' };
-                tr.innerHTML = `
-                  <td>
-                    <div class="fw-bold text-dark">${info.nombre}</div>
-                    <small class="text-muted">${info.categoria} | Cód: ${idMat}</small>
-                  </td>
-                  <td class="text-end align-middle">
-                    <span class="badge bg-primary fs-6">${res.stock[idMat]} ${info.unidad}</span>
-                  </td>
-                `;
-                tbody.appendChild(tr);
-              });
-            } else {
-              tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted small py-3">Sin material en furgón actualmente</td></tr>';
+          try {
+            const res = await app.api.req('obtenerStockFurgon', {token: app.state.token});
+            if(res.success){
+              const tb = document.getElementById('tbodyStockFurgon'); tb.innerHTML='';
+              if(Object.keys(res.stock).length===0) tb.innerHTML = '<tr><td class="text-center text-muted py-3">Furgón Vacío</td></tr>';
+              else Object.keys(res.stock).sort().forEach(id => { const m=app.state.catalogoMap[id]||{nom:id,cat:'',uni:'ud'}; tb.innerHTML+=`<tr><td><div class="fw-bold">${m.nom}</div><small class="text-muted">${m.cat} | ${id}</small></td><td class="text-end align-middle"><span class="badge bg-primary fs-6">${res.stock[id]} ${m.uni}</span></td></tr>`;});
             }
-
-            const lista = document.getElementById('listaUltimosMovsFurgon');
-            while (lista.firstChild) lista.removeChild(lista.firstChild);
-
-            if (res.ultimosMovimientos && res.ultimosMovimientos.length > 0) {
-              res.ultimosMovimientos.forEach(m => {
-                const info = app.state.catalogoMap[m.material.toUpperCase()] || { nombre: m.material };
-                const div = document.createElement('div');
-                div.className = 'list-group-item py-2 small d-flex justify-content-between align-items-center';
-                div.innerHTML = `
-                  <div>
-                    <div class="fw-bold">${info.nombre}</div>
-                    <small class="text-muted">${m.fecha} (${m.tipo})</small>
-                  </div>
-                  <span class="badge bg-secondary">${m.cantidad}</span>
-                `;
-                lista.appendChild(div);
-              });
-            } else {
-              lista.innerHTML = '<div class="list-group-item text-center text-muted small py-2">Sin traspasos recientes</div>';
-            }
-          }
+          } catch(e){}
         },
-
-        generarIdempotencia(tipo) {
-          const array = new Uint8Array(16);
-          crypto.getRandomValues(array);
-          const key = 'IDEM_' + Array.from(array, b => ('0' + b.toString(16)).slice(-2)).join('');
-          if (tipo === 'mantenimiento') app.state.idempotencyMantenimiento = key;
-          else if (tipo === 'efectivo') app.state.idempotencyEfectivo = key;
-          else if (tipo === 'furgon') app.state.idempotencyFurgon = key;
-          return key;
-        },
-
         async handleGuardarMantenimiento(e) {
-          e.preventDefault();
-          app.ui.showAlert('alertForm', null);
-          app.ui.showAlert('alertSuccess', null);
-
-          // Recolectar lista de materiales usados
-          const filasMat = document.querySelectorAll('.mat-row');
-          const materialesUsados = [];
-
-          filasMat.forEach(row => {
-            const id = row.querySelector('.sel-mat-item').value;
-            const cant = parseFloat(row.querySelector('.txt-cant-item').value);
-            if (id && !isNaN(cant) && cant > 0) {
-              materialesUsados.push({ id: id, cantidad: cant });
-            }
-          });
-
-          const key = app.state.idempotencyMantenimiento || app.actions.generarIdempotencia('mantenimiento');
-          const btn = document.getElementById('btnGuardarIntervencion');
-          btn.disabled = true;
-          app.ui.setLoader(true, 'Registrando intervención...');
-
-          const payload = {
-            idempotencyKey: key,
-            fechaMantenimiento: document.getElementById('txtFecha').value,
-            empresa: document.getElementById('selEmpresa').value,
-            local: document.getElementById('selLocal').value,
-            idEquipo: document.getElementById('selEquipo').value,
-            tipoMantenimiento: document.getElementById('selTipoMant').value,
-            estadoFinal: document.getElementById('selEstadoFinal').value,
-            materialesUsados: materialesUsados,
-            descripcion: document.getElementById('taDescripcion').value,
-            observaciones: document.getElementById('taObservaciones').value,
-            fotoEquipoBase64: app.state.fotos.equipo.base64,
-            fotoAlbaranBase64: app.state.fotos.albaran.base64
-          };
-
-          const res = await app.api.request('registrarIntervencion', { token: app.state.token, payload: payload });
-          app.ui.setLoader(false);
-          btn.disabled = false;
-
-          if (res.success) {
-            app.ui.showAlert('alertSuccess', `¡Intervención guardada! ID: ${res.idIntervencion || 'OK'}`);
-            document.getElementById('formIntervencion').reset();
-            document.getElementById('txtFecha').valueAsDate = new Date();
-            document.getElementById('txtTecnicoNombre').value = app.state.tecnico;
-            document.getElementById('selLocal').disabled = true;
-            document.getElementById('selEquipo').disabled = true;
-            document.getElementById('contenedorMaterialesUsados').innerHTML = '';
-
-            ['equipo', 'albaran'].forEach(t => {
-              app.state.fotos[t] = { base64: '', bytes: 0 };
-              const cap = t.charAt(0).toUpperCase() + t.slice(1);
-              document.getElementById(`imgPreview${cap}`).classList.add('d-none');
-              document.getElementById(`lblPlaceholder${cap}`).classList.remove('d-none');
-              document.getElementById(`meta${cap}`).textContent = '';
-            });
-            app.state.idempotencyMantenimiento = null;
-          } else {
-            app.ui.showAlert('alertForm', res.error || 'Error al guardar intervención.');
-          }
+          e.preventDefault(); if(!navigator.onLine) { app.ui.showToast('Recupera conexión para guardar', 'danger'); return; }
+          const btns = document.querySelectorAll('.submit-btn'); btns.forEach(b=>b.disabled=true); app.ui.setLoader(true, 'Enviando Informe...');
+          if(!app.state.idempotency.mantenimiento) app.utils.generarIdem('mantenimiento');
+          const mat = []; document.querySelectorAll('.mat-row').forEach(r=>{ const id=r.querySelector('.sel-mat').value, c=parseFloat(r.querySelector('.txt-qty').value); if(id&&c>0) mat.push({id:id, cantidad:c}); });
+          
+          try {
+            const res = await app.api.req('registrarIntervencion', { token: app.state.token, payload: {
+              idempotencyKey: app.state.idempotency.mantenimiento, fechaMantenimiento: document.getElementById('txtFecha').value, empresa: document.getElementById('selEmpresa').value, local: document.getElementById('selLocal').value, idEquipo: document.getElementById('selEquipo').value, tipoMantenimiento: document.getElementById('selTipoMant').value, estadoFinal: document.getElementById('selEstadoFinal').value, descripcion: document.getElementById('taDescripcion').value, observaciones: document.getElementById('taObservaciones').value, fotoEquipoBase64: app.state.fotos.equipo.base64, fotoAlbaranBase64: app.state.fotos.albaran.base64, materialesUsados: mat
+            }});
+            if(res.success){
+              app.ui.showToast('✅ Parte registrado', 'success'); document.getElementById('formIntervencion').reset(); document.getElementById('contenedorMaterialesUsados').innerHTML='';
+              app.state.fotos.equipo.base64=''; app.state.fotos.albaran.base64=''; document.getElementById('imgPreviewEquipo').classList.add('d-none'); document.getElementById('imgPreviewAlbaran').classList.add('d-none'); document.getElementById('lblPlaceholderEquipo').classList.remove('d-none'); document.getElementById('lblPlaceholderAlbaran').classList.remove('d-none'); document.getElementById('metaEquipo').textContent=''; document.getElementById('metaAlbaran').textContent=''; app.state.idempotency.mantenimiento=null; app.state.formDirty=false;
+            } else app.ui.showToast(res.error, 'danger');
+          } catch(e){} finally { btns.forEach(b=>b.disabled=false); app.ui.setLoader(false); }
         },
-
         async handleGuardarEfectivo(e) {
-          e.preventDefault();
-          app.ui.showAlert('alertEfectivo', null);
-          app.ui.showAlert('alertSuccessEfectivo', null);
-
-          const key = app.state.idempotencyEfectivo || app.actions.generarIdempotencia('efectivo');
-          const btn = document.getElementById('btnGuardarEfectivo');
-          btn.disabled = true;
-          app.ui.setLoader(true, 'Registrando movimiento de efectivo...');
-
-          const payload = {
-            idempotencyKey: key,
-            fecha: document.getElementById('txtFechaEfectivo').value,
-            tipo: document.getElementById('selTipoEfectivo').value,
-            importe: document.getElementById('txtImporteEfectivo').value,
-            proveedor: document.getElementById('txtProveedorEfectivo').value,
-            concepto: document.getElementById('txtConceptoEfectivo').value,
-            comentarios: document.getElementById('taComentariosEfectivo').value,
-            fotoFacturaBase64: app.state.fotos.factura.base64
-          };
-
-          const res = await app.api.request('registrarMovimientoEfectivo', { token: app.state.token, payload: payload });
-          app.ui.setLoader(false);
-          btn.disabled = false;
-
-          if (res.success) {
-            app.ui.showAlert('alertSuccessEfectivo', '¡Movimiento de efectivo registrado correctamente!');
-            document.getElementById('formEfectivo').reset();
-            document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
-            app.state.fotos.factura = { base64: '', bytes: 0 };
-            document.getElementById('imgPreviewFactura').classList.add('d-none');
-            document.getElementById('lblPlaceholderFactura').classList.remove('d-none');
-            document.getElementById('metaFactura').textContent = '';
-            app.state.idempotencyEfectivo = null;
-
-            await app.actions.cargarSaldoEfectivo();
-          } else {
-            app.ui.showAlert('alertEfectivo', res.error || 'Error al registrar movimiento.');
-          }
+          e.preventDefault(); if(!navigator.onLine) { app.ui.showToast('Recupera conexión para guardar', 'danger'); return; }
+          const btns = document.querySelectorAll('.submit-btn'); btns.forEach(b=>b.disabled=true); app.ui.setLoader(true, 'Guardando...');
+          if(!app.state.idempotency.efectivo) app.utils.generarIdem('efectivo');
+          try {
+            const res = await app.api.req('registrarMovimientoEfectivo', { token: app.state.token, payload: {
+              idempotencyKey: app.state.idempotency.efectivo, fecha: document.getElementById('txtFechaEfectivo').value, tipo: document.getElementById('selTipoEfectivo').value, importe: document.getElementById('txtImporteEfectivo').value, proveedor: document.getElementById('txtProveedorEfectivo').value, concepto: document.getElementById('txtConceptoEfectivo').value, comentarios: document.getElementById('taComentariosEfectivo').value, fotoFacturaBase64: app.state.fotos.factura.base64
+            }});
+            if(res.success){ app.ui.showToast('✅ Movimiento registrado', 'success'); document.getElementById('formEfectivo').reset(); app.state.fotos.factura.base64=''; document.getElementById('imgPreviewFactura').classList.add('d-none'); document.getElementById('metaFactura').textContent=''; app.state.idempotency.efectivo=null; app.actions.cargarSaldoEfectivo(); }
+            else app.ui.showToast(res.error, 'danger');
+          } catch(e){} finally { btns.forEach(b=>b.disabled=false); app.ui.setLoader(false); }
         },
-
         async handleGuardarTraspasoFurgon(e) {
-          e.preventDefault();
-          app.ui.showAlert('alertFurgon', null);
-          app.ui.showAlert('alertSuccessFurgon', null);
-
-          const idMaterial = document.getElementById('selMatFurgon').value;
-          if (!idMaterial) {
-            app.ui.showAlert('alertFurgon', 'Debe seleccionar un material.');
-            return;
-          }
-
-          const key = app.state.idempotencyFurgon || app.actions.generarIdempotencia('furgon');
-          const btn = document.getElementById('btnGuardarFurgon');
-          btn.disabled = true;
-          app.ui.setLoader(true, 'Registrando traspaso en inventario...');
-
-          const payload = {
-            idempotencyKey: key,
-            tipoTraspaso: document.getElementById('selTipoTraspaso').value,
-            idMaterial: idMaterial,
-            cantidad: document.getElementById('txtCantidadFurgon').value,
-            observaciones: document.getElementById('txtObsFurgon').value
-          };
-
-          const res = await app.api.request('registrarTraspasoFurgon', { token: app.state.token, payload: payload });
-          app.ui.setLoader(false);
-          btn.disabled = false;
-
-          if (res.success) {
-            app.ui.showAlert('alertSuccessFurgon', '¡Traspaso de material registrado exitosamente!');
-            document.getElementById('formFurgon').reset();
-            document.getElementById('selMatFurgon').disabled = true;
-            app.state.idempotencyFurgon = null;
-            await app.actions.cargarStockFurgon();
-          } else {
-            app.ui.showAlert('alertFurgon', res.error || 'Error al registrar traspaso.');
-          }
-        },
-
-        init() {
-          document.getElementById('txtFecha').valueAsDate = new Date();
-          document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
-          const token = sessionStorage.getItem('BK_AUTH_TOKEN');
-          const tec = sessionStorage.getItem('BK_AUTH_TECNICO');
-          const usr = sessionStorage.getItem('BK_AUTH_USER');
-
-          if (token && tec && usr) {
-            app.state.token = token;
-            app.state.tecnico = tec;
-            app.state.usuario = usr;
-            app.actions.iniciarSesionUI();
-          }
+          e.preventDefault(); if(!navigator.onLine) { app.ui.showToast('Recupera conexión para guardar', 'danger'); return; }
+          const btns = document.querySelectorAll('.submit-btn'); btns.forEach(b=>b.disabled=true); app.ui.setLoader(true, 'Guardando...');
+          if(!app.state.idempotency.furgon) app.utils.generarIdem('furgon');
+          try {
+            const res = await app.api.req('registrarTraspasoFurgon', { token: app.state.token, payload: {
+              idempotencyKey: app.state.idempotency.furgon, tipoTraspaso: document.getElementById('selTipoTraspaso').value, idMaterial: document.getElementById('selMatFurgon').value, cantidad: document.getElementById('txtCantidadFurgon').value, observaciones: document.getElementById('txtObsFurgon').value
+            }});
+            if(res.success){ app.ui.showToast('✅ Furgón actualizado', 'success'); document.getElementById('formFurgon').reset(); app.state.idempotency.furgon=null; app.actions.cargarStockFurgon(); }
+            else app.ui.showToast(res.error, 'danger');
+          } catch(e){} finally { btns.forEach(b=>b.disabled=false); app.ui.setLoader(false); }
         }
       }
     };
 
-    document.addEventListener('DOMContentLoaded', app.actions.init);
+    // Alertas de conectividad
+    window.addEventListener('online', () => { document.getElementById('offlineWarning').style.display='none'; app.ui.showToast('Conexión restaurada', 'success'); });
+    window.addEventListener('offline', () => { document.getElementById('offlineWarning').style.display='block'; });
+    
+    // Alerta de recarga accidental
+    window.addEventListener('beforeunload', (e) => { if(app.state.formDirty) { e.preventDefault(); e.returnValue = ''; } });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const t = sessionStorage.getItem('T'), te = sessionStorage.getItem('TE'), u = sessionStorage.getItem('US');
+      if (t && te && u) { app.state.token=t; app.state.tecnico=te; app.state.usuario=u; app.actions.boot(); }
+    });
   </script>
 </body>
 </html>
