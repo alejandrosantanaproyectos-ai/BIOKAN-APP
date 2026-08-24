@@ -241,18 +241,29 @@
               </div>
             </div>
 
-            <!-- CONSUMO DE MATERIAL EN CLIENTE (OPCIONAL) -->
+            <!-- CONSUMO DE MATERIAL CON DESPLEGABLES EN CASCADA -->
             <div class="p-3 bg-light rounded-3 mb-3 border">
-              <label class="form-label fw-bold text-dark mb-1"><i class="bi bi-box-seam me-1 text-primary"></i>Repuesto o Consumible Utilizado (Opcional)</label>
-              <div class="row g-2">
-                <div class="col-md-8">
-                  <input type="text" class="form-control" id="txtMatUsado" placeholder="Código o Nombre del Material (Ej: FIL-020)">
+              <label class="form-label fw-bold text-dark mb-2"><i class="bi bi-box-seam me-1 text-primary"></i>Repuesto o Consumible Utilizado (Opcional)</label>
+              <div class="row g-2 mb-2">
+                <div class="col-md-6">
+                  <select class="form-select" id="selCatMatMant" onchange="app.handlers.onCatMatMantChange()">
+                    <option value="">-- Seleccionar Categoría --</option>
+                  </select>
                 </div>
-                <div class="col-md-4">
-                  <input type="number" step="1" min="1" class="form-control" id="txtCantMatUsado" placeholder="Cantidad">
+                <div class="col-md-6">
+                  <select class="form-select" id="selMatMant" disabled>
+                    <option value="">-- Seleccionar Material --</option>
+                  </select>
                 </div>
               </div>
-              <small class="text-muted" style="font-size: 0.75rem;">Se descontará automáticamente del stock de tu furgón.</small>
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <input type="number" step="1" min="1" class="form-control" id="txtCantMatUsado" placeholder="Cantidad usada">
+                </div>
+                <div class="col-md-8 d-flex align-items-center">
+                  <small class="text-muted" style="font-size: 0.75rem;">Se descontará automáticamente del stock de tu furgón.</small>
+                </div>
+              </div>
             </div>
 
             <div class="mb-3">
@@ -412,7 +423,7 @@
             </div>
           </div>
 
-          <!-- REGISTRO DE TRASPASO (CARGAR DESDE CENTRAL O DEVOLVER) -->
+          <!-- REGISTRO DE TRASPASO CON DESPLEGABLES EN CASCADA -->
           <div class="card border mb-3">
             <div class="card-header bg-white fw-bold">
               <i class="bi bi-arrow-left-right me-1 text-primary"></i>Cargar o Devolver Material
@@ -422,17 +433,26 @@
               <div class="alert alert-success d-none" id="alertSuccessFurgon" role="alert"></div>
 
               <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)" novalidate>
+                <div class="mb-2">
+                  <label class="form-label small fw-bold text-secondary">Acción *</label>
+                  <select class="form-select" id="selTipoTraspaso" required>
+                    <option value="CARGA">CARGAR de Central ➔ Furgón</option>
+                    <option value="DESCARGA">DEVOLVER de Furgón ➔ Central</option>
+                  </select>
+                </div>
+
                 <div class="row g-2 mb-2">
                   <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">Acción *</label>
-                    <select class="form-select" id="selTipoTraspaso" required>
-                      <option value="CARGA">CARGAR de Central ➔ Furgón</option>
-                      <option value="DESCARGA">DEVOLVER de Furgón ➔ Central</option>
+                    <label class="form-label small fw-bold text-secondary">1. Categoría *</label>
+                    <select class="form-select" id="selCatMatFurgon" onchange="app.handlers.onCatMatFurgonChange()" required>
+                      <option value="">-- Seleccionar Categoría --</option>
                     </select>
                   </div>
                   <div class="col-md-6">
-                    <label class="form-label small fw-bold text-secondary">ID / Código Material *</label>
-                    <input type="text" class="form-control" id="txtIdMaterialFurgon" placeholder="Ej: MAT-001, FIL-020" required>
+                    <label class="form-label small fw-bold text-secondary">2. Material *</label>
+                    <select class="form-select" id="selMatFurgon" required disabled>
+                      <option value="">-- Seleccionar Material --</option>
+                    </select>
                   </div>
                 </div>
 
@@ -471,7 +491,7 @@
     const app = {
       config: {
         apiUrl: "https://script.google.com/macros/s/AKfycbzR4JZt4NSn15lQa3e6799xDa55pYq5ECner-vX3BtcNwcwQHJLlfC5ZrsXsWTZTEX9/exec",
-        version: "2.3.0",
+        version: "2.4.0",
         maxFileRawBytes: 12582912,
         maxFinalBytes: 819200,
         timeoutMs: 50000
@@ -482,6 +502,7 @@
         tecnico: null,
         usuario: null,
         dbRutas: {},
+        dbCatalogo: {},
         idempotencyMantenimiento: null,
         idempotencyEfectivo: null,
         idempotencyFurgon: null,
@@ -734,6 +755,42 @@
           const sel = document.getElementById('selEquipo');
           const opt = sel.options[sel.selectedIndex];
           document.getElementById('txtModeloEquipo').value = opt ? (opt.getAttribute('data-modelo') || '') : '';
+        },
+
+        onCatMatMantChange() {
+          const cat = document.getElementById('selCatMatMant').value;
+          const selMat = document.getElementById('selMatMant');
+          app.ui.limpiarSelect(selMat, '-- Seleccionar Material --');
+
+          if (cat && app.state.dbCatalogo[cat]) {
+            app.state.dbCatalogo[cat].forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m.id;
+              opt.textContent = `${m.id} - ${m.nombre} (${m.unidad})`;
+              selMat.appendChild(opt);
+            });
+            selMat.disabled = false;
+          } else {
+            selMat.disabled = true;
+          }
+        },
+
+        onCatMatFurgonChange() {
+          const cat = document.getElementById('selCatMatFurgon').value;
+          const selMat = document.getElementById('selMatFurgon');
+          app.ui.limpiarSelect(selMat, '-- Seleccionar Material --');
+
+          if (cat && app.state.dbCatalogo[cat]) {
+            app.state.dbCatalogo[cat].forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m.id;
+              opt.textContent = `${m.id} - ${m.nombre} (${m.unidad})`;
+              selMat.appendChild(opt);
+            });
+            selMat.disabled = false;
+          } else {
+            selMat.disabled = true;
+          }
         }
       },
 
@@ -789,6 +846,7 @@
           document.getElementById('viewMain').classList.remove('d-none');
 
           await app.actions.cargarRutas();
+          await app.actions.cargarCatalogoMateriales();
           await app.actions.cargarSaldoEfectivo();
         },
 
@@ -803,6 +861,30 @@
               opt.value = emp;
               opt.textContent = emp;
               selEmpresa.appendChild(opt);
+            });
+          }
+        },
+
+        async cargarCatalogoMateriales() {
+          const res = await app.api.request('obtenerCatalogoMateriales', { token: app.state.token });
+          if (res.success) {
+            app.state.dbCatalogo = res.catalogo || {};
+            const selCatMant = document.getElementById('selCatMatMant');
+            const selCatFurgon = document.getElementById('selCatMatFurgon');
+
+            app.ui.limpiarSelect(selCatMant, '-- Seleccionar Categoría --');
+            app.ui.limpiarSelect(selCatFurgon, '-- Seleccionar Categoría --');
+
+            Object.keys(app.state.dbCatalogo).sort().forEach(cat => {
+              const opt1 = document.createElement('option');
+              opt1.value = cat;
+              opt1.textContent = cat;
+              selCatMant.appendChild(opt1);
+
+              const opt2 = document.createElement('option');
+              opt2.value = cat;
+              opt2.textContent = cat;
+              selCatFurgon.appendChild(opt2);
             });
           }
         },
@@ -900,7 +982,7 @@
             idEquipo: document.getElementById('selEquipo').value,
             tipoMantenimiento: document.getElementById('selTipoMant').value,
             estadoFinal: document.getElementById('selEstadoFinal').value,
-            materialUsado: document.getElementById('txtMatUsado').value,
+            materialUsado: document.getElementById('selMatMant').value,
             cantidadMaterialUsado: document.getElementById('txtCantMatUsado').value,
             descripcion: document.getElementById('taDescripcion').value,
             observaciones: document.getElementById('taObservaciones').value,
@@ -919,6 +1001,7 @@
             document.getElementById('txtTecnicoNombre').value = app.state.tecnico;
             document.getElementById('selLocal').disabled = true;
             document.getElementById('selEquipo').disabled = true;
+            document.getElementById('selMatMant').disabled = true;
             ['equipo', 'albaran'].forEach(t => {
               app.state.fotos[t] = { base64: '', bytes: 0 };
               const cap = t.charAt(0).toUpperCase() + t.slice(1);
@@ -978,6 +1061,12 @@
           app.ui.showAlert('alertFurgon', null);
           app.ui.showAlert('alertSuccessFurgon', null);
 
+          const idMaterial = document.getElementById('selMatFurgon').value;
+          if (!idMaterial) {
+            app.ui.showAlert('alertFurgon', 'Debe seleccionar un material.');
+            return;
+          }
+
           const key = app.state.idempotencyFurgon || app.actions.generarIdempotencia('furgon');
           const btn = document.getElementById('btnGuardarFurgon');
           btn.disabled = true;
@@ -986,7 +1075,7 @@
           const payload = {
             idempotencyKey: key,
             tipoTraspaso: document.getElementById('selTipoTraspaso').value,
-            idMaterial: document.getElementById('txtIdMaterialFurgon').value,
+            idMaterial: idMaterial,
             cantidad: document.getElementById('txtCantidadFurgon').value,
             observaciones: document.getElementById('txtObsFurgon').value
           };
@@ -998,6 +1087,7 @@
           if (res.success) {
             app.ui.showAlert('alertSuccessFurgon', '¡Traspaso de material registrado exitosamente!');
             document.getElementById('formFurgon').reset();
+            document.getElementById('selMatFurgon').disabled = true;
             app.state.idempotencyFurgon = null;
             await app.actions.cargarStockFurgon();
           } else {
