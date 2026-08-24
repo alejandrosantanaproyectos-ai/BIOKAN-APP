@@ -3,55 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://script.google.com https://*.googleusercontent.com; img-src 'self' data: blob: https:; connect-src 'self' https://script.google.com https://*.googleusercontent.com;">  <title>Biokan - Field Operations</title>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://script.google.com https://*.googleusercontent.com; img-src 'self' data: blob: https:; connect-src 'self' https://cdn.jsdelivr.net https://script.google.com https://*.googleusercontent.com;">
+  <title>Biokan - Field Operations</title>
   
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
   <style>
-    :root {
-      --bk-primary: #0284c7; --bk-primary-hover: #0369a1; --bk-dark: #0f172a; --bk-bg: #f1f5f9;
-    }
+    :root { --bk-primary: #0284c7; --bk-primary-hover: #0369a1; --bk-dark: #0f172a; --bk-bg: #f1f5f9; }
     body { background-color: var(--bk-bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #334155; padding-bottom: 80px; }
-    
-    /* Top Bar & Cards */
     .card-custom { border-radius: 14px; border: none; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); background-color: #fff; overflow: hidden; }
     .header-box { background: linear-gradient(135deg, #1e293b 0%, var(--bk-dark) 100%); color: #fff; padding: 18px; border-radius: 0 0 16px 16px; margin-bottom: 20px;}
     .btn-primary-custom { background-color: var(--bk-primary); border: none; border-radius: 8px; font-weight: 600; padding: 12px; }
-    
-    /* Bottom Navigation Bar (App Feel) */
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); border-radius: 20px 20px 0 0; }
     .nav-item-bottom { flex: 1; text-align: center; padding: 12px 0; color: #94a3b8; font-size: 0.75rem; cursor: pointer; border-top: 3px solid transparent; transition: all 0.2s; }
     .nav-item-bottom.active { color: var(--bk-primary); border-top-color: var(--bk-primary); font-weight: 700; background: linear-gradient(to top, rgba(2,132,199,0.08), transparent); }
     .nav-item-bottom i { font-size: 1.4rem; display: block; margin-bottom: 2px; }
-
-    /* Offline Warning */
     #offlineWarning { position: fixed; top: 0; left: 0; width: 100%; background-color: #ef4444; color: white; text-align: center; padding: 6px; font-weight: bold; font-size: 0.85rem; z-index: 2000; display: none; }
-    
-    /* Previews & Helpers */
     .preview-container { width: 100%; height: 120px; border: 2px dashed #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;}
     .preview-container img { width: 100%; height: 100%; object-fit: cover; }
     .mat-row { background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid var(--bk-primary); }
-    
-    /* Toast Positioning */
     .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1055; width: 90%; max-width: 400px;}
-    
-    /* Loader Overlay */
     .loader-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: #fff; }
+    .wallet-card { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; border-radius: 12px; padding: 20px; text-align: center; }
   </style>
 </head>
 <body>
 
-  <!-- OFFLINE WARNING -->
   <div id="offlineWarning"><i class="bi bi-wifi-off me-2"></i>Sin conexión. Espera a tener cobertura para enviar.</div>
-
-  <!-- LOADER -->
   <div class="loader-overlay" id="loaderOverlay">
     <div class="spinner-border text-info" style="width: 3rem; height: 3rem;" role="status"></div>
     <div class="mt-3 fw-bold fs-5" id="loaderStatusText">Procesando...</div>
   </div>
-
-  <!-- TOASTS CONTAINER -->
   <div class="toast-container" id="toastContainer"></div>
 
   <div class="container py-2" style="max-width: 680px;">
@@ -127,17 +110,16 @@
             <textarea class="form-control" id="taObservaciones" rows="2" placeholder="Observaciones, riesgos o piezas necesarias para volver..."></textarea>
           </div>
 
-          <!-- MATERIALES UTILIZADOS (MULTI-ROW) -->
+          <!-- MATERIALES UTILIZADOS (FILTRADO POR FURGÓN) -->
           <div class="card card-custom p-3 mb-3 border-primary border-opacity-25">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h6 class="fw-bold text-primary mb-0"><i class="bi bi-box-seam me-1"></i>Materiales Gastados</h6>
               <button type="button" class="btn btn-sm btn-primary rounded-pill" onclick="app.handlers.agregarFilaMaterial()"><i class="bi bi-plus-lg"></i> Añadir</button>
             </div>
             <div id="contenedorMaterialesUsados"></div>
-            <small class="text-muted fst-italic text-center d-block mt-2">Lo que añadas aquí se descontará de tu furgón.</small>
+            <small class="text-muted fst-italic text-center d-block mt-2">Solo aparecen los repuestos que tienes cargados en tu furgoneta actualmente.</small>
           </div>
 
-          <!-- FOTOGRAFÍAS -->
           <div class="card card-custom p-3 mb-4">
             <h6 class="fw-bold text-primary mb-3"><i class="bi bi-camera me-1"></i>Fotografías Obligatorias</h6>
             <div class="row g-3">
@@ -285,12 +267,12 @@
   <script>
     const app = {
       config: {
-        // === ACTUALIZA AQUÍ TU URL /exec ===
+        // === PEGA AQUÍ TU NUEVA URL DE APPS SCRIPT ===
         apiUrl: "https://script.google.com/macros/s/AKfycbwa2bnIPdqgWcgqgCfmJ11rT6iIzrSUyyZYuWhKzC5TiYaezkKHkBFJszDgpiFbUuns/exec",
         maxFileRawBytes: 12582912, maxFinalBytes: 819200, timeoutMs: 45000
       },
 
-      state: { token: null, tecnico: null, usuario: null, dbRutas: {}, dbCatalogo: {}, catalogoMap: {},
+      state: { token: null, tecnico: null, usuario: null, dbRutas: {}, dbCatalogo: {}, catalogoMap: {}, stockFurgonRaw: {},
         idempotency: { mantenimiento: null, efectivo: null, furgon: null },
         fotos: { equipo: { base64: ''}, albaran: { base64: ''}, factura: { base64: ''} },
         formDirty: false
@@ -321,6 +303,17 @@
           document.getElementById('module' + modulo.charAt(0).toUpperCase() + modulo.slice(1)).classList.remove('d-none');
           if(modulo === 'efectivo') app.actions.cargarSaldoEfectivo();
           if(modulo === 'furgon') app.actions.cargarStockFurgon();
+        },
+        renderStockFurgonView(res) {
+          const tb = document.getElementById('tbodyStockFurgon'); tb.innerHTML='';
+          if(Object.keys(res.stock || {}).length===0) {
+            tb.innerHTML = '<tr><td class="text-center text-muted py-3">Furgón Vacío</td></tr>';
+          } else {
+            Object.keys(res.stock).sort().forEach(id => { 
+              const m = app.state.catalogoMap[id] || {nom:id, cat:'Varios', uni:'ud'}; 
+              tb.innerHTML+=`<tr><td><div class="fw-bold">${m.nom}</div><small class="text-muted">${m.cat} | ${id}</small></td><td class="text-end align-middle"><span class="badge bg-primary fs-6">${res.stock[id]} ${m.uni}</span></td></tr>`;
+            });
+          }
         }
       },
 
@@ -408,20 +401,42 @@
           const div = document.createElement('div'); div.className = 'mat-row';
           const rId = 'r_'+Date.now(); div.id = rId;
           
-          let cats = '<option value="">-- Categoría --</option>';
-          Object.keys(app.state.dbCatalogo).sort().forEach(c => cats += `<option value="${c}">${c}</option>`);
+          // Filtrar categorías que SÍ existen en el furgón
+          const catsInFurgon = new Set();
+          Object.keys(app.state.stockFurgonRaw || {}).forEach(id => {
+             if(app.state.catalogoMap[id]) catsInFurgon.add(app.state.catalogoMap[id].cat);
+          });
+
+          if (catsInFurgon.size === 0) {
+             app.ui.showToast('Tu furgón está vacío. No hay material para gastar.', 'warning');
+             return;
+          }
+
+          let cats = '<option value="">-- Categoría en Furgón --</option>';
+          Array.from(catsInFurgon).sort().forEach(c => cats += `<option value="${c}">${c}</option>`);
           
           div.innerHTML = `
             <div class="row g-2 mb-2"><div class="col-12"><select class="form-select sel-cat" onchange="app.handlers.llenarMatRow(this)">${cats}</select></div>
-            <div class="col-12"><select class="form-select sel-mat" disabled><option value="">-- Repuesto exacto --</option></select></div></div>
+            <div class="col-12"><select class="form-select sel-mat" disabled><option value="">-- Material disponible --</option></select></div></div>
             <div class="d-flex gap-2"><input type="number" class="form-control txt-qty" placeholder="Cantidad usada" min="1"><button type="button" class="btn btn-outline-danger" onclick="document.getElementById('${rId}').remove()"><i class="bi bi-trash"></i></button></div>
           `;
           document.getElementById('contenedorMaterialesUsados').appendChild(div);
         },
         llenarMatRow(selCat) {
           const cat = selCat.value, sM = selCat.parentElement.parentElement.querySelector('.sel-mat');
-          app.ui.limpiarSelect(sM, '-- Repuesto exacto --');
-          if(cat && app.state.dbCatalogo[cat]){ app.state.dbCatalogo[cat].forEach(m => sM.innerHTML += `<option value="${m.id}">${m.nombre} (${m.unidad})</option>`); sM.disabled=false; } else sM.disabled=true;
+          app.ui.limpiarSelect(sM, '-- Material disponible --');
+          if(cat){ 
+             Object.keys(app.state.stockFurgonRaw || {}).forEach(id => {
+                const info = app.state.catalogoMap[id];
+                if(info && info.cat === cat) {
+                   const maxQty = app.state.stockFurgonRaw[id];
+                   sM.innerHTML += `<option value="${id}">${info.nom} (Tienes: ${maxQty} ${info.uni})</option>`;
+                }
+             });
+             sM.disabled=false; 
+          } else { 
+             sM.disabled=true; 
+          }
         }
       },
 
@@ -439,32 +454,54 @@
           } catch(e){} finally { app.ui.setLoader(false); }
         },
         handleLogout() { sessionStorage.clear(); location.reload(); },
+        
         async boot() {
+          // CORRECCIÓN APLICADA AQUÍ: Quitada la línea problemática que buscaba el campo eliminado
           document.getElementById('viewLogin').classList.add('d-none'); document.getElementById('viewMain').classList.remove('d-none'); document.getElementById('bottomNav').classList.remove('d-none');
           document.getElementById('labelTecnicoSesion').textContent = app.state.tecnico; document.getElementById('labelUserCode').textContent = app.state.usuario;
-          document.getElementById('txtTecnicoNombre').value = app.state.tecnico; document.getElementById('txtFecha').valueAsDate = new Date(); document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
+          document.getElementById('txtFecha').valueAsDate = new Date(); document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
+          
           app.ui.setLoader(true, 'Sincronizando BD...');
           try {
-            const [rE, rC] = await Promise.all([app.api.req('obtenerEquipos', {token: app.state.token}), app.api.req('obtenerCatalogoMateriales', {token: app.state.token})]);
-            if(rE.success) { app.state.dbRutas = rE.datos; const sE = document.getElementById('selEmpresa'); Object.keys(rE.datos).sort().forEach(e => sE.innerHTML+=`<option value="${e}">${e}</option>`); }
-            if(rC.success) { app.state.dbCatalogo = rC.catalogo; Object.keys(rC.catalogo).forEach(c => rC.catalogo[c].forEach(m => app.state.catalogoMap[m.id] = {nom:m.nombre, cat:c, uni:m.unidad})); 
-              const sCF = document.getElementById('selCatMatFurgon'); Object.keys(rC.catalogo).sort().forEach(c => sCF.innerHTML+=`<option value="${c}">${c}</option>`);
+            // Se cargan rutas, catálogo y el stock del furgón a la vez
+            const [rE, rC, rF] = await Promise.all([
+              app.api.req('obtenerEquipos', {token: app.state.token}), 
+              app.api.req('obtenerCatalogoMateriales', {token: app.state.token}),
+              app.api.req('obtenerStockFurgon', {token: app.state.token})
+            ]);
+            
+            if(rE && rE.success) { 
+              app.state.dbRutas = rE.datos; 
+              const sE = document.getElementById('selEmpresa'); 
+              Object.keys(rE.datos).sort().forEach(e => sE.innerHTML+=`<option value="${e}">${e}</option>`); 
+            }
+            if(rC && rC.success) { 
+              app.state.dbCatalogo = rC.catalogo; 
+              Object.keys(rC.catalogo).forEach(c => rC.catalogo[c].forEach(m => app.state.catalogoMap[m.id] = {nom:m.nombre, cat:c, uni:m.unidad})); 
+              const sCF = document.getElementById('selCatMatFurgon'); 
+              Object.keys(rC.catalogo).sort().forEach(c => sCF.innerHTML+=`<option value="${c}">${c}</option>`);
+            }
+            if(rF && rF.success) {
+              app.state.stockFurgonRaw = rF.stock || {};
+              app.ui.renderStockFurgonView(rF);
             }
           } catch(e){} finally { app.ui.setLoader(false); }
         },
+        
         async cargarSaldoEfectivo() {
           try { const res = await app.api.req('obtenerSaldoEfectivo', {token: app.state.token}); if(res.success){ document.getElementById('lblSaldoEfectivo').textContent = parseFloat(res.saldo).toFixed(2)+' €'; } } catch(e){}
         },
+        
         async cargarStockFurgon() {
           try {
             const res = await app.api.req('obtenerStockFurgon', {token: app.state.token});
             if(res.success){
-              const tb = document.getElementById('tbodyStockFurgon'); tb.innerHTML='';
-              if(Object.keys(res.stock).length===0) tb.innerHTML = '<tr><td class="text-center text-muted py-3">Furgón Vacío</td></tr>';
-              else Object.keys(res.stock).sort().forEach(id => { const m=app.state.catalogoMap[id]||{nom:id,cat:'',uni:'ud'}; tb.innerHTML+=`<tr><td><div class="fw-bold">${m.nom}</div><small class="text-muted">${m.cat} | ${id}</small></td><td class="text-end align-middle"><span class="badge bg-primary fs-6">${res.stock[id]} ${m.uni}</span></td></tr>`;});
+              app.state.stockFurgonRaw = res.stock || {};
+              app.ui.renderStockFurgonView(res);
             }
           } catch(e){}
         },
+        
         async handleGuardarMantenimiento(e) {
           e.preventDefault(); if(!navigator.onLine) { app.ui.showToast('Recupera conexión para guardar', 'danger'); return; }
           const btns = document.querySelectorAll('.submit-btn'); btns.forEach(b=>b.disabled=true); app.ui.setLoader(true, 'Enviando Informe...');
@@ -478,9 +515,12 @@
             if(res.success){
               app.ui.showToast('✅ Parte registrado', 'success'); document.getElementById('formIntervencion').reset(); document.getElementById('contenedorMaterialesUsados').innerHTML='';
               app.state.fotos.equipo.base64=''; app.state.fotos.albaran.base64=''; document.getElementById('imgPreviewEquipo').classList.add('d-none'); document.getElementById('imgPreviewAlbaran').classList.add('d-none'); document.getElementById('lblPlaceholderEquipo').classList.remove('d-none'); document.getElementById('lblPlaceholderAlbaran').classList.remove('d-none'); document.getElementById('metaEquipo').textContent=''; document.getElementById('metaAlbaran').textContent=''; app.state.idempotency.mantenimiento=null; app.state.formDirty=false;
+              // Al gastar material, actualizamos el stock del furgón por debajo
+              app.actions.cargarStockFurgon();
             } else app.ui.showToast(res.error, 'danger');
           } catch(e){} finally { btns.forEach(b=>b.disabled=false); app.ui.setLoader(false); }
         },
+        
         async handleGuardarEfectivo(e) {
           e.preventDefault(); if(!navigator.onLine) { app.ui.showToast('Recupera conexión para guardar', 'danger'); return; }
           const btns = document.querySelectorAll('.submit-btn'); btns.forEach(b=>b.disabled=true); app.ui.setLoader(true, 'Guardando...');
@@ -493,6 +533,7 @@
             else app.ui.showToast(res.error, 'danger');
           } catch(e){} finally { btns.forEach(b=>b.disabled=false); app.ui.setLoader(false); }
         },
+        
         async handleGuardarTraspasoFurgon(e) {
           e.preventDefault(); if(!navigator.onLine) { app.ui.showToast('Recupera conexión para guardar', 'danger'); return; }
           const btns = document.querySelectorAll('.submit-btn'); btns.forEach(b=>b.disabled=true); app.ui.setLoader(true, 'Guardando...');
@@ -508,11 +549,8 @@
       }
     };
 
-    // Alertas de conectividad
     window.addEventListener('online', () => { document.getElementById('offlineWarning').style.display='none'; app.ui.showToast('Conexión restaurada', 'success'); });
     window.addEventListener('offline', () => { document.getElementById('offlineWarning').style.display='block'; });
-    
-    // Alerta de recarga accidental
     window.addEventListener('beforeunload', (e) => { if(app.state.formDirty) { e.preventDefault(); e.returnValue = ''; } });
 
     document.addEventListener('DOMContentLoaded', () => {
