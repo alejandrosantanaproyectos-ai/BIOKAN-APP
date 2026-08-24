@@ -87,6 +87,7 @@
       color: #64748b;
       font-weight: 600;
       border-radius: 8px;
+      font-size: 0.9rem;
     }
     .nav-pills .nav-link.active {
       background-color: var(--bk-primary);
@@ -135,7 +136,7 @@
       </div>
     </div>
 
-    <!-- PANTALLA PRINCIPAL CON PESTAÑAS -->
+    <!-- PANTALLA PRINCIPAL CON 3 PESTAÑAS -->
     <div class="card card-custom d-none" id="viewMain">
       <div class="header-box d-flex justify-content-between align-items-center">
         <div>
@@ -148,16 +149,21 @@
       </div>
 
       <!-- SELECTOR DE MÓDULOS -->
-      <div class="p-3 bg-light border-bottom">
-        <ul class="nav nav-pills nav-fill" id="moduleTabs">
+      <div class="p-2 bg-light border-bottom">
+        <ul class="nav nav-pills nav-fill gap-1" id="moduleTabs">
           <li class="nav-item">
             <button class="nav-link active" id="tab-mantenimiento" onclick="app.ui.switchModule('mantenimiento')">
-              <i class="bi bi-tools me-1"></i>Mantenimiento
+              <i class="bi bi-tools me-1"></i>Partes
             </button>
           </li>
           <li class="nav-item">
             <button class="nav-link" id="tab-efectivo" onclick="app.ui.switchModule('efectivo')">
-              <i class="bi bi-wallet2 me-1"></i>Cartera Efectivo
+              <i class="bi bi-wallet2 me-1"></i>Efectivo
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link" id="tab-furgon" onclick="app.ui.switchModule('furgon')">
+              <i class="bi bi-truck me-1"></i>Mi Furgón
             </button>
           </li>
         </ul>
@@ -235,6 +241,20 @@
               </div>
             </div>
 
+            <!-- CONSUMO DE MATERIAL EN CLIENTE (OPCIONAL) -->
+            <div class="p-3 bg-light rounded-3 mb-3 border">
+              <label class="form-label fw-bold text-dark mb-1"><i class="bi bi-box-seam me-1 text-primary"></i>Repuesto o Consumible Utilizado (Opcional)</label>
+              <div class="row g-2">
+                <div class="col-md-8">
+                  <input type="text" class="form-control" id="txtMatUsado" placeholder="Código o Nombre del Material (Ej: FIL-020)">
+                </div>
+                <div class="col-md-4">
+                  <input type="number" step="1" min="1" class="form-control" id="txtCantMatUsado" placeholder="Cantidad">
+                </div>
+              </div>
+              <small class="text-muted" style="font-size: 0.75rem;">Se descontará automáticamente del stock de tu furgón.</small>
+            </div>
+
             <div class="mb-3">
               <label class="form-label fw-bold text-secondary" for="taDescripcion">Descripción del Trabajo Realizado *</label>
               <textarea class="form-control" id="taDescripcion" rows="3" required maxlength="2000" placeholder="Detalle técnico de las tareas realizadas..."></textarea>
@@ -288,7 +308,6 @@
         <!-- MÓDULO 2: CARTERA DE EFECTIVO              -->
         <!-- ========================================== -->
         <div class="d-none" id="moduleEfectivo">
-          
           <div class="wallet-card mb-4">
             <small class="text-white-50 text-uppercase fw-bold">Saldo Actual Disponible</small>
             <h2 class="display-5 fw-bold my-1" id="lblSaldoEfectivo">0,00 €</h2>
@@ -299,7 +318,6 @@
           <div class="alert alert-success d-none" id="alertSuccessEfectivo" role="alert"></div>
 
           <form id="formEfectivo" onsubmit="app.actions.handleGuardarEfectivo(event)" novalidate>
-            
             <div class="row g-3 mb-3">
               <div class="col-md-6">
                 <label class="form-label fw-bold text-secondary" for="txtFechaEfectivo">Fecha *</label>
@@ -358,12 +376,88 @@
             </button>
           </form>
 
-          <!-- ÚLTIMOS MOVIMIENTOS -->
           <div class="mt-4">
             <h6 class="fw-bold text-secondary mb-3"><i class="bi bi-clock-history me-1"></i>Últimos Movimientos Registrados</h6>
             <div class="list-group" id="listaUltimosMovimientos">
               <div class="list-group-item text-center text-muted small py-3">No hay movimientos recientes</div>
             </div>
+          </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MÓDULO 3: MI FURGÓN (INVENTARIO)           -->
+        <!-- ========================================== -->
+        <div class="d-none" id="moduleFurgon">
+          
+          <!-- TABLA DE STOCK DISPONIBLE EN EL FURGÓN -->
+          <div class="card bg-light border mb-4">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-box-seam me-1 text-primary"></i>Stock Actual en mi Furgón</h6>
+                <button class="btn btn-sm btn-outline-primary" type="button" onclick="app.actions.cargarStockFurgon()"><i class="bi bi-arrow-clockwise"></i></button>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-dark">
+                    <tr>
+                      <th>Material / Código</th>
+                      <th class="text-end">Cantidad</th>
+                    </tr>
+                  </thead>
+                  <tbody id="tbodyStockFurgon">
+                    <tr><td colspan="2" class="text-center text-muted small py-2">Cargando existencias...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- REGISTRO DE TRASPASO (CARGAR DESDE CENTRAL O DEVOLVER) -->
+          <div class="card border mb-3">
+            <div class="card-header bg-white fw-bold">
+              <i class="bi bi-arrow-left-right me-1 text-primary"></i>Cargar o Devolver Material
+            </div>
+            <div class="card-body p-3">
+              <div class="alert alert-danger d-none" id="alertFurgon" role="alert"></div>
+              <div class="alert alert-success d-none" id="alertSuccessFurgon" role="alert"></div>
+
+              <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)" novalidate>
+                <div class="row g-2 mb-2">
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">Acción *</label>
+                    <select class="form-select" id="selTipoTraspaso" required>
+                      <option value="CARGA">CARGAR de Central ➔ Furgón</option>
+                      <option value="DESCARGA">DEVOLVER de Furgón ➔ Central</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label small fw-bold text-secondary">ID / Código Material *</label>
+                    <input type="text" class="form-control" id="txtIdMaterialFurgon" placeholder="Ej: MAT-001, FIL-020" required>
+                  </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                  <div class="col-md-4">
+                    <label class="form-label small fw-bold text-secondary">Cantidad *</label>
+                    <input type="number" step="1" min="1" class="form-control" id="txtCantidadFurgon" placeholder="0" required>
+                  </div>
+                  <div class="col-md-8">
+                    <label class="form-label small fw-bold text-secondary">Observaciones</label>
+                    <input type="text" class="form-control" id="txtObsFurgon" placeholder="Motivo o detalle...">
+                  </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary-custom w-100 py-2 text-white" id="btnGuardarFurgon">
+                  Registrar Movimiento de Furgón
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- HISTORIAL DE TRASPASOS -->
+          <h6 class="fw-bold text-secondary mb-2 small"><i class="bi bi-clock-history me-1"></i>Últimos Traspasos</h6>
+          <div class="list-group" id="listaUltimosMovsFurgon">
+            <div class="list-group-item text-center text-muted small py-2">Sin movimientos</div>
           </div>
 
         </div>
@@ -376,9 +470,8 @@
   <script>
     const app = {
       config: {
-        // COLOCAR AQUÍ LA URL DE DESPLIEGUE /exec
         apiUrl: "https://script.google.com/macros/s/AKfycbzR4JZt4NSn15lQa3e6799xDa55pYq5ECner-vX3BtcNwcwQHJLlfC5ZrsXsWTZTEX9/exec",
-        version: "2.2.0",
+        version: "2.3.0",
         maxFileRawBytes: 12582912,
         maxFinalBytes: 819200,
         timeoutMs: 50000
@@ -391,6 +484,7 @@
         dbRutas: {},
         idempotencyMantenimiento: null,
         idempotencyEfectivo: null,
+        idempotencyFurgon: null,
         fotos: {
           equipo: { base64: '', bytes: 0 },
           albaran: { base64: '', bytes: 0 },
@@ -429,20 +523,26 @@
         switchModule(modulo) {
           const tabMant = document.getElementById('tab-mantenimiento');
           const tabEf = document.getElementById('tab-efectivo');
+          const tabFur = document.getElementById('tab-furgon');
+          
           const modMant = document.getElementById('moduleMantenimiento');
           const modEf = document.getElementById('moduleEfectivo');
+          const modFur = document.getElementById('moduleFurgon');
+
+          [tabMant, tabEf, tabFur].forEach(t => t.classList.remove('active'));
+          [modMant, modEf, modFur].forEach(m => m.classList.add('d-none'));
 
           if (modulo === 'mantenimiento') {
             tabMant.classList.add('active');
-            tabEf.classList.remove('active');
             modMant.classList.remove('d-none');
-            modEf.classList.add('d-none');
-          } else {
+          } else if (modulo === 'efectivo') {
             tabEf.classList.add('active');
-            tabMant.classList.remove('active');
             modEf.classList.remove('d-none');
-            modMant.classList.add('d-none');
             app.actions.cargarSaldoEfectivo();
+          } else if (modulo === 'furgon') {
+            tabFur.classList.add('active');
+            modFur.classList.remove('d-none');
+            app.actions.cargarStockFurgon();
           }
         }
       },
@@ -451,6 +551,10 @@
         async comprimirImagen(file) {
           if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
             throw new Error('Tipo de archivo no permitido. Seleccione JPEG, PNG o WebP.');
+          }
+
+          if (file.size > app.config.maxFileRawBytes) {
+            throw new Error(`Archivo demasiado grande (${(file.size / 1048576).toFixed(1)} MB). Máximo: 12 MB.`);
           }
 
           const originalSizeKb = Math.round(file.size / 1024);
@@ -557,7 +661,7 @@
             return;
           }
 
-          app.ui.setLoader(true, 'Comprimiendo fotografía...', 'Optimizando para transmisión segura');
+          app.ui.setLoader(true, 'Comprimiendo fotografía...', 'Optimizando para transmisión rápida');
 
           try {
             const result = await app.imgEngine.comprimirImagen(file);
@@ -670,7 +774,7 @@
 
         async handleLogout() {
           if (app.state.token) {
-            app.ui.setLoader(true, 'Cerrando sesión...', 'Finalizando sesión de forma segura');
+            app.ui.setLoader(true, 'Cerrando sesión...', 'Finalizando sesión');
             await app.api.request('logout', { token: app.state.token });
           }
           sessionStorage.clear();
@@ -730,7 +834,40 @@
                 lista.appendChild(item);
               });
             } else {
-              lista.innerHTML = '<div class="list-group-item text-center text-muted small py-3">No hay movimientos registrados aún</div>';
+              lista.innerHTML = '<div class="list-group-item text-center text-muted small py-3">No hay movimientos registrados</div>';
+            }
+          }
+        },
+
+        async cargarStockFurgon() {
+          const res = await app.api.request('obtenerStockFurgon', { token: app.state.token });
+          if (res.success) {
+            const tbody = document.getElementById('tbodyStockFurgon');
+            while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+
+            const keys = Object.keys(res.stock || {});
+            if (keys.length > 0) {
+              keys.sort().forEach(k => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `<td class="fw-bold">${k}</td><td class="text-end text-primary fw-bold">${res.stock[k]}</td>`;
+                tbody.appendChild(tr);
+              });
+            } else {
+              tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted small py-2">Sin material en furgón actualmente</td></tr>';
+            }
+
+            const lista = document.getElementById('listaUltimosMovsFurgon');
+            while (lista.firstChild) lista.removeChild(lista.firstChild);
+
+            if (res.ultimosMovimientos && res.ultimosMovimientos.length > 0) {
+              res.ultimosMovimientos.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'list-group-item py-1 small d-flex justify-content-between';
+                div.innerHTML = `<span><strong>${m.material}</strong> (${m.tipo})</span> <span class="text-muted">${m.cantidad} uds</span>`;
+                lista.appendChild(div);
+              });
+            } else {
+              lista.innerHTML = '<div class="list-group-item text-center text-muted small py-2">Sin traspasos recientes</div>';
             }
           }
         },
@@ -740,7 +877,8 @@
           crypto.getRandomValues(array);
           const key = 'IDEM_' + Array.from(array, b => ('0' + b.toString(16)).slice(-2)).join('');
           if (tipo === 'mantenimiento') app.state.idempotencyMantenimiento = key;
-          else app.state.idempotencyEfectivo = key;
+          else if (tipo === 'efectivo') app.state.idempotencyEfectivo = key;
+          else if (tipo === 'furgon') app.state.idempotencyFurgon = key;
           return key;
         },
 
@@ -762,6 +900,8 @@
             idEquipo: document.getElementById('selEquipo').value,
             tipoMantenimiento: document.getElementById('selTipoMant').value,
             estadoFinal: document.getElementById('selEstadoFinal').value,
+            materialUsado: document.getElementById('txtMatUsado').value,
+            cantidadMaterialUsado: document.getElementById('txtCantMatUsado').value,
             descripcion: document.getElementById('taDescripcion').value,
             observaciones: document.getElementById('taObservaciones').value,
             fotoEquipoBase64: app.state.fotos.equipo.base64,
@@ -833,6 +973,38 @@
           }
         },
 
+        async handleGuardarTraspasoFurgon(e) {
+          e.preventDefault();
+          app.ui.showAlert('alertFurgon', null);
+          app.ui.showAlert('alertSuccessFurgon', null);
+
+          const key = app.state.idempotencyFurgon || app.actions.generarIdempotencia('furgon');
+          const btn = document.getElementById('btnGuardarFurgon');
+          btn.disabled = true;
+          app.ui.setLoader(true, 'Registrando traspaso en inventario...');
+
+          const payload = {
+            idempotencyKey: key,
+            tipoTraspaso: document.getElementById('selTipoTraspaso').value,
+            idMaterial: document.getElementById('txtIdMaterialFurgon').value,
+            cantidad: document.getElementById('txtCantidadFurgon').value,
+            observaciones: document.getElementById('txtObsFurgon').value
+          };
+
+          const res = await app.api.request('registrarTraspasoFurgon', { token: app.state.token, payload: payload });
+          app.ui.setLoader(false);
+          btn.disabled = false;
+
+          if (res.success) {
+            app.ui.showAlert('alertSuccessFurgon', '¡Traspaso de material registrado exitosamente!');
+            document.getElementById('formFurgon').reset();
+            app.state.idempotencyFurgon = null;
+            await app.actions.cargarStockFurgon();
+          } else {
+            app.ui.showAlert('alertFurgon', res.error || 'Error al registrar traspaso.');
+          }
+        },
+
         init() {
           document.getElementById('txtFecha').valueAsDate = new Date();
           document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
@@ -854,4 +1026,3 @@
   </script>
 </body>
 </html>
-
