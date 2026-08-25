@@ -41,21 +41,27 @@
 
   <div class="container py-2" style="max-width: 680px;">
     
-    <!-- LOGIN -->
+    <!-- LOGIN CON SELECTOR DE FURGONETA -->
     <div class="card card-custom mb-4" id="viewLogin">
       <div class="header-box text-center shadow-none mb-0 rounded-0">
         <h3 class="mb-1"><i class="bi bi-shield-lock text-info me-2"></i>Biokan Auth</h3>
-        <small class="text-white-50">Portal Técnico Seguro</small>
+        <small class="text-white-50">Portal Técnico de Campo</small>
       </div>
       <div class="card-body p-4">
         <form id="formLogin" onsubmit="app.actions.handleLogin(event)">
           <div class="mb-3">
             <label class="form-label fw-bold text-secondary">Usuario</label>
-            <input type="text" class="form-control form-control-lg" id="inputUser" required autocomplete="username">
+            <input type="text" class="form-control form-control-lg" id="inputUser" required autocomplete="username" oninput="app.handlers.onUserInputChange()">
           </div>
-          <div class="mb-4">
+          <div class="mb-3">
             <label class="form-label fw-bold text-secondary">Contraseña</label>
             <input type="password" class="form-control form-control-lg" id="inputPass" required autocomplete="current-password">
+          </div>
+          <div class="mb-4" id="boxSelectorFurgoLogin">
+            <label class="form-label fw-bold text-secondary"><i class="bi bi-truck me-1 text-primary"></i>Furgoneta del Turno *</label>
+            <select class="form-select form-select-lg" id="selFurgoLogin" required>
+              <option value="">Cargando matrículas...</option>
+            </select>
           </div>
           <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnLoginSubmit">Acceder al Sistema</button>
         </form>
@@ -68,6 +74,7 @@
         <div>
           <h5 class="mb-0 fw-bold" id="labelTecnicoSesion">Técnico</h5>
           <small class="text-info" id="labelUserCode">TB00</small>
+          <span class="badge bg-warning text-dark ms-2 fw-bold" id="badgeMatriculaFurgo">1234AAA</span>
         </div>
         <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="app.actions.handleLogout()"><i class="bi bi-box-arrow-right"></i> Salir</button>
       </div>
@@ -111,14 +118,14 @@
             <textarea class="form-control" id="taObservaciones" rows="2" placeholder="Observaciones o notas pendientes..."></textarea>
           </div>
 
-          <!-- MATERIALES UTILIZADOS -->
+          <!-- MATERIALES UTILIZADOS (FILTRADOS POR EL STOCK REAL DE ESTA FURGONETA) -->
           <div class="card card-custom p-3 mb-3 border-primary border-opacity-25">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h6 class="fw-bold text-primary mb-0"><i class="bi bi-box-seam me-1"></i>Materiales Gastados</h6>
               <button type="button" class="btn btn-sm btn-primary rounded-pill" onclick="app.handlers.agregarFilaMaterial()"><i class="bi bi-plus-lg"></i> Añadir</button>
             </div>
             <div id="contenedorMaterialesUsados"></div>
-            <small class="text-muted fst-italic text-center d-block mt-2">Se descuentan del stock de tu furgón.</small>
+            <small class="text-muted fst-italic text-center d-block mt-2">Solo aparecen repuestos con existencias en tu vehículo seleccionado.</small>
           </div>
 
           <!-- FOTOS -->
@@ -206,11 +213,13 @@
         </div>
       </div>
 
-      <!-- FURGON -->
+      <!-- FURGON / ALMACÉN -->
       <div id="moduleFurgon" class="d-none px-2 pb-5">
         <div class="card card-custom mb-3 border-primary">
           <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-            <h6 class="fw-bold mb-0 text-primary"><i class="bi bi-truck me-1"></i>Stock en mi Furgón</h6>
+            <h6 class="fw-bold mb-0 text-primary">
+              <i class="bi bi-truck me-1"></i>Stock en <span id="lblTituloFurgonTab">Vehículo</span>
+            </h6>
             <button class="btn btn-sm btn-light border rounded-pill" onclick="app.actions.cargarStockFurgon()"><i class="bi bi-arrow-clockwise"></i></button>
           </div>
           <div class="table-responsive p-0 m-0">
@@ -224,8 +233,8 @@
           <h6 class="fw-bold text-dark mb-3"><i class="bi bi-box-arrow-in-down me-1"></i>Traspaso de Material</h6>
           <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)">
             <select class="form-select mb-2" id="selTipoTraspaso" required>
-              <option value="CARGA">📥 CARGAR de Central ➔ Furgón</option>
-              <option value="DESCARGA">📤 DEVOLVER de Furgón ➔ Central</option>
+              <option value="CARGA">📥 CARGAR de Central ➔ Mi Vehículo</option>
+              <option value="DESCARGA">📤 DEVOLVER de Mi Vehículo ➔ Central</option>
             </select>
             <select class="form-select mb-2" id="selCatMatFurgon" onchange="app.handlers.onCatMatFurgonChange()" required>
               <option value="">-- 1. Categoría --</option>
@@ -272,7 +281,7 @@
       },
 
       state: {
-        token: null, tecnico: null, usuario: null,
+        token: null, tecnico: null, usuario: null, matricula: 'CENTRAL', esAdmin: false,
         dbRutas: {}, dbCatalogo: {}, catalogoMap: {}, stockFurgonRaw: {},
         idempotency: { mantenimiento: null, efectivo: null, furgon: null },
         fotos: { equipo: { base64: '' }, albaran: { base64: '' }, factura: { base64: '' } },
@@ -310,11 +319,11 @@
           tb.innerHTML = '';
           const keys = Object.keys(stockObj || {});
           if (keys.length === 0) {
-            tb.innerHTML = '<tr><td class="text-center text-muted py-3">Furgón sin material</td></tr>';
+            tb.innerHTML = '<tr><td class="text-center text-muted py-3">Sin existencias en este vehículo</td></tr>';
           } else {
             keys.sort().forEach(id => {
-              const m = app.state.catalogoMap[id] || { nom: id, cat: 'Varios', uni: 'ud' };
-              tb.innerHTML += `<tr><td><div class="fw-bold">${m.nom}</div><small class="text-muted">${m.cat} | ${id}</small></td><td class="text-end align-middle"><span class="badge bg-primary fs-6">${stockObj[id]} ${m.uni}</span></td></tr>`;
+              const m = app.state.catalogoMap[id] || { nom: id, cat: 'Varios', uni: 'UD' };
+              tb.innerHTML += `<tr><td><div class="fw-bold">${m.nom}</div><small class="text-muted">${m.cat} | Cód: ${id}</small></td><td class="text-end align-middle"><span class="badge bg-primary fs-6">${stockObj[id]} ${m.uni}</span></td></tr>`;
             });
           }
         },
@@ -379,6 +388,19 @@
       },
 
       handlers: {
+        onUserInputChange() {
+          const u = document.getElementById('inputUser').value.trim().toUpperCase();
+          const box = document.getElementById('boxSelectorFurgoLogin');
+          const sel = document.getElementById('selFurgoLogin');
+          if (u === 'ADMIN') {
+            box.style.display = 'none';
+            sel.required = false;
+          } else {
+            box.style.display = 'block';
+            sel.required = true;
+          }
+        },
+
         async onFotoSelected(input, tipo) {
           app.state.formDirty = true;
           const file = input.files[0];
@@ -402,6 +424,7 @@
             app.ui.setLoader(false);
           }
         },
+
         onEmpresaChange() {
           app.state.formDirty = true;
           const emp = document.getElementById('selEmpresa').value, sL = document.getElementById('selLocal'), sE = document.getElementById('selEquipo');
@@ -414,6 +437,7 @@
             sL.disabled = false;
           } else sL.disabled = true;
         },
+
         onLocalChange() {
           const emp = document.getElementById('selEmpresa').value, loc = document.getElementById('selLocal').value, sE = document.getElementById('selEquipo');
           app.ui.limpiarSelect(sE, '-- 3. Equipo --');
@@ -423,10 +447,12 @@
             sE.disabled = false;
           } else sE.disabled = true;
         },
+
         onEquipoChange() {
           const opt = document.getElementById('selEquipo').selectedOptions[0];
           document.getElementById('txtModeloEquipo').value = opt ? opt.getAttribute('data-mod') : '';
         },
+
         onCatMatFurgonChange() {
           const cat = document.getElementById('selCatMatFurgon').value, sM = document.getElementById('selMatFurgon');
           app.ui.limpiarSelect(sM, '-- 2. Material --');
@@ -435,6 +461,7 @@
             sM.disabled = false;
           } else sM.disabled = true;
         },
+
         agregarFilaMaterial() {
           app.state.formDirty = true;
           const div = document.createElement('div');
@@ -448,7 +475,7 @@
           });
 
           if (catsInFurgon.size === 0) {
-            app.ui.showToast('Furgón sin existencias para asignar.', 'warning');
+            app.ui.showToast('Esta furgoneta no tiene stock cargado.', 'warning');
             return;
           }
 
@@ -467,6 +494,7 @@
           `;
           document.getElementById('contenedorMaterialesUsados').appendChild(div);
         },
+
         llenarMatRow(selCat) {
           const cat = selCat.value, sM = selCat.parentElement.parentElement.querySelector('.sel-mat');
           app.ui.limpiarSelect(sM, '-- Material disponible --');
@@ -486,19 +514,41 @@
       },
 
       actions: {
+        async precargarFurgosLogin() {
+          try {
+            const res = await app.api.req('obtenerFurgosDisponibles');
+            const sel = document.getElementById('selFurgoLogin');
+            sel.innerHTML = '<option value="">-- Seleccionar Furgoneta --</option>';
+            if (res.success && Array.isArray(res.furgos)) {
+              res.furgos.forEach(f => {
+                if (f !== 'CENTRAL') sel.innerHTML += `<option value="${f}">🚚 ${f}</option>`;
+              });
+            }
+          } catch (e) {}
+        },
+
         async handleLogin(e) {
           e.preventDefault();
-          const u = document.getElementById('inputUser').value.trim(), p = document.getElementById('inputPass').value.trim();
+          const u = document.getElementById('inputUser').value.trim();
+          const p = document.getElementById('inputPass').value.trim();
+          const mat = document.getElementById('selFurgoLogin').value;
+
           app.ui.setLoader(true, 'Autenticando...');
           try {
-            const res = await app.api.req('login', { usuario: u, clave: p });
+            const res = await app.api.req('login', { usuario: u, clave: p, matricula: mat });
             if (res.success) {
               sessionStorage.setItem('T', res.token);
               sessionStorage.setItem('TE', res.tecnico);
               sessionStorage.setItem('US', res.usuario);
+              sessionStorage.setItem('MAT', res.matricula);
+              sessionStorage.setItem('ADM', res.esAdmin ? '1' : '0');
+
               app.state.token = res.token;
               app.state.tecnico = res.tecnico;
               app.state.usuario = res.usuario;
+              app.state.matricula = res.matricula;
+              app.state.esAdmin = res.esAdmin;
+
               app.actions.boot();
             } else {
               app.ui.showToast(res.error || 'Credenciales incorrectas', 'danger');
@@ -520,32 +570,15 @@
           document.getElementById('viewLogin').classList.add('d-none');
           document.getElementById('viewMain').classList.remove('d-none');
           document.getElementById('bottomNav').classList.remove('d-none');
+          
           document.getElementById('labelTecnicoSesion').textContent = app.state.tecnico;
           document.getElementById('labelUserCode').textContent = app.state.usuario;
+          document.getElementById('badgeMatriculaFurgo').textContent = app.state.matricula;
+          document.getElementById('lblTituloFurgonTab').textContent = app.state.esAdmin ? 'Almacén Central' : `Furgón ${app.state.matricula}`;
+
           document.getElementById('txtFecha').valueAsDate = new Date();
           document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
 
-          // 1. CARGA INMEDIATA DESDE LOCALSTORAGE (0 ms)
-          const cached = localStorage.getItem('BK_CACHE_DATA');
-          if (cached) {
-            try {
-              const cData = JSON.parse(cached);
-              app.state.dbRutas = cData.rutas || {};
-              app.state.dbCatalogo = cData.catalogo || {};
-              app.state.stockFurgonRaw = cData.stockFurgon || {};
-              app.state.catalogoMap = {};
-              Object.keys(app.state.dbCatalogo).forEach(c => {
-                app.state.dbCatalogo[c].forEach(m => app.state.catalogoMap[m.id] = { nom: m.nombre, cat: c, uni: m.unidad });
-              });
-              app.ui.popularSelectoresUI();
-              app.ui.renderStockFurgonView(app.state.stockFurgonRaw);
-              if (cData.saldoEfectivo !== undefined) {
-                document.getElementById('lblSaldoEfectivo').textContent = parseFloat(cData.saldoEfectivo).toFixed(2) + ' €';
-              }
-            } catch (e) {}
-          }
-
-          // 2. SINCRONIZACIÓN EN 1 VIAJE CON BACKEND
           app.ui.setLoader(true, 'Sincronizando...');
           try {
             const res = await app.api.req('initData', { token: app.state.token });
@@ -556,27 +589,15 @@
             if (res.success) {
               app.state.dbRutas = res.rutas || {};
               app.state.dbCatalogo = res.catalogo || {};
+              app.state.catalogoMap = res.catalogoMap || {};
               app.state.stockFurgonRaw = res.stockFurgon || {};
-              app.state.catalogoMap = {};
-
-              Object.keys(app.state.dbCatalogo).forEach(c => {
-                app.state.dbCatalogo[c].forEach(m => app.state.catalogoMap[m.id] = { nom: m.nombre, cat: c, uni: m.unidad });
-              });
 
               app.ui.popularSelectoresUI();
               app.ui.renderStockFurgonView(app.state.stockFurgonRaw);
               document.getElementById('lblSaldoEfectivo').textContent = parseFloat(res.saldoEfectivo || 0).toFixed(2) + ' €';
-
-              // Guardar en caché para apertura instantánea en próximas visitas
-              localStorage.setItem('BK_CACHE_DATA', JSON.stringify({
-                rutas: res.rutas,
-                catalogo: res.catalogo,
-                stockFurgon: res.stockFurgon,
-                saldoEfectivo: res.saldoEfectivo
-              }));
             }
           } catch (e) {
-            if (!cached) app.ui.showToast('Modo sin conexión activado.', 'warning');
+            app.ui.showToast('Modo sin conexión', 'warning');
           } finally {
             app.ui.setLoader(false);
           }
@@ -722,11 +743,11 @@
             });
 
             if (res.success) {
-              app.ui.showToast('✅ Furgón actualizado', 'success');
+              app.ui.showToast('✅ Matriz actualizada', 'success');
               document.getElementById('formFurgon').reset();
               document.getElementById('selMatFurgon').disabled = true;
               app.state.idempotency.furgon = null;
-              app.actions.cargarStockFurgon();
+              await app.actions.boot();
             } else {
               app.ui.showToast(res.error || 'Error en traspaso', 'danger');
             }
@@ -745,9 +766,10 @@
     window.addEventListener('beforeunload', (e) => { if (app.state.formDirty) { e.preventDefault(); e.returnValue = ''; } });
 
     document.addEventListener('DOMContentLoaded', () => {
-      const t = sessionStorage.getItem('T'), te = sessionStorage.getItem('TE'), u = sessionStorage.getItem('US');
+      app.actions.precargarFurgosLogin();
+      const t = sessionStorage.getItem('T'), te = sessionStorage.getItem('TE'), u = sessionStorage.getItem('US'), mat = sessionStorage.getItem('MAT'), adm = sessionStorage.getItem('ADM');
       if (t && te && u) {
-        app.state.token = t; app.state.tecnico = te; app.state.usuario = u;
+        app.state.token = t; app.state.tecnico = te; app.state.usuario = u; app.state.matricula = mat || 'CENTRAL'; app.state.esAdmin = adm === '1';
         app.actions.boot();
       }
     });
