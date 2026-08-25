@@ -1,629 +1,745 @@
-/**
- * =============================================================================
- * BIOKAN - BACKEND API INTEGRAL DEPURADO
- * Versión de Producción: 3.5.0
- * =============================================================================
- */
-
-const APP_VERSION = '3.5.0';
-const MAX_PAYLOAD_BYTES = 2621440; // 2.5 MB
-const MAX_IMAGE_BYTES = 819200;    // 800 KB
-const CACHE_TTL_SESSION = 14400;   // 4 horas
-
-function doPost(e) {
-  const reqId = Utilities.getUuid().substring(0, 8);
-  const t0 = new Date().getTime();
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://script.google.com https://*.googleusercontent.com; img-src 'self' data: blob: https:; connect-src 'self' https://cdn.jsdelivr.net https://script.google.com https://*.googleusercontent.com;">
+  <title>Biokan - Field Operations</title>
   
-  try {
-    if (!e || !e.postData || !e.postData.contents) {
-      return responderJSON_({ success: false, error: 'Solicitud vacía o inválida.' });
-    }
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-    if (e.postData.contents.length > MAX_PAYLOAD_BYTES) {
-      return responderJSON_({ success: false, error: 'La carga útil supera el límite permitido.' });
-    }
+  <style>
+    :root { --bk-primary: #0284c7; --bk-primary-hover: #0369a1; --bk-dark: #0f172a; --bk-bg: #f1f5f9; }
+    body { background-color: var(--bk-bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #334155; padding-bottom: 80px; }
+    .card-custom { border-radius: 14px; border: none; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05); background-color: #fff; overflow: hidden; }
+    .header-box { background: linear-gradient(135deg, #1e293b 0%, var(--bk-dark) 100%); color: #fff; padding: 18px; border-radius: 0 0 16px 16px; margin-bottom: 20px;}
+    .btn-primary-custom { background-color: var(--bk-primary); border: none; border-radius: 8px; font-weight: 600; padding: 12px; }
+    .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); border-radius: 20px 20px 0 0; }
+    .nav-item-bottom { flex: 1; text-align: center; padding: 12px 0; color: #94a3b8; font-size: 0.75rem; cursor: pointer; border-top: 3px solid transparent; transition: all 0.2s; }
+    .nav-item-bottom.active { color: var(--bk-primary); border-top-color: var(--bk-primary); font-weight: 700; background: linear-gradient(to top, rgba(2,132,199,0.08), transparent); }
+    .nav-item-bottom i { font-size: 1.4rem; display: block; margin-bottom: 2px; }
+    #offlineWarning { position: fixed; top: 0; left: 0; width: 100%; background-color: #ef4444; color: white; text-align: center; padding: 6px; font-weight: bold; font-size: 0.85rem; z-index: 2000; display: none; }
+    .preview-container { width: 100%; height: 120px; border: 2px dashed #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;}
+    .preview-container img { width: 100%; height: 100%; object-fit: cover; }
+    .mat-row { background-color: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; margin-bottom: 8px; border-left: 4px solid var(--bk-primary); }
+    .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1055; width: 90%; max-width: 400px;}
+    .loader-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: #fff; }
+    .wallet-card { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; border-radius: 12px; padding: 20px; text-align: center; }
+  </style>
+</head>
+<body>
 
-    let request;
-    try {
-      request = JSON.parse(e.postData.contents);
-    } catch (parseErr) {
-      return responderJSON_({ success: false, error: 'Formato JSON malformado.' });
-    }
-
-    const accion = String(request.accion || '').trim();
-    let respuesta;
-
-    switch (accion) {
-      case 'status':
-        respuesta = { success: true, version: APP_VERSION, serverTime: new Date().toISOString() };
-        break;
-
-      case 'login':
-        respuesta = apiLogin_(request.usuario, request.clave, reqId);
-        break;
-
-      case 'logout':
-        respuesta = apiLogout_(request.token);
-        break;
-
-      case 'initData':
-        respuesta = apiInitData_(request.token, reqId);
-        break;
-
-      case 'obtenerSaldoEfectivo':
-        respuesta = apiObtenerSaldoEfectivo_(request.token, reqId);
-        break;
-
-      case 'registrarIntervencion':
-        respuesta = apiRegistrarIntervencion_(request.token, request.payload, reqId);
-        break;
-
-      case 'registrarMovimientoEfectivo':
-        respuesta = apiRegistrarMovimientoEfectivo_(request.token, request.payload, reqId);
-        break;
-
-      case 'obtenerStockFurgon':
-        respuesta = apiObtenerStockFurgon_(request.token, reqId);
-        break;
-
-      case 'registrarTraspasoFurgon':
-        respuesta = apiRegistrarTraspasoFurgon_(request.token, request.payload, reqId);
-        break;
-
-      default:
-        respuesta = { success: false, error: 'Acción no reconocida.' };
-        break;
-    }
-
-    console.info(`[${reqId}] ${accion} -> ${respuesta.success} (${new Date().getTime() - t0}ms)`);
-    return responderJSON_(respuesta);
-
-  } catch (globalErr) {
-    console.error(`[${reqId}] Error en doPost:`, globalErr.toString());
-    return responderJSON_({ success: false, error: 'Error interno en el servidor.' });
-  }
-}
-
-function doGet() {
-  return ContentService.createTextOutput(JSON.stringify({ 
-    success: true, 
-    service: 'BIOKAN Operations API',
-    status: 'ONLINE', 
-    version: APP_VERSION 
-  })).setMimeType(ContentService.MimeType.JSON);
-}
-
-// =============================================================================
-// LOGIN Y ASIGNACIÓN AUTOMÁTICA DE VEHÍCULO
-// =============================================================================
-
-function apiLogin_(usuario, clave, reqId) {
-  const u = String(usuario || '').trim(), p = String(clave || '').trim();
-  const config = obtenerConfiguracion_();
-  const ssTrabajadores = SpreadsheetApp.openById(config.SS_TRABAJADORES_ID);
+  <div id="offlineWarning"><i class="bi bi-wifi-off me-2"></i>Sin conexión. Espera a tener cobertura para enviar.</div>
   
-  // 1. Validar Credenciales de Usuario
-  const shTrabajadores = ssTrabajadores.getSheetByName(config.SHEET_TRABAJADORES);
-  if (!shTrabajadores || shTrabajadores.getLastRow() < 2) {
-    return { success: false, error: 'Base de datos de trabajadores no disponible.' };
-  }
-
-  const dataTrabajadores = shTrabajadores.getRange(2, 1, shTrabajadores.getLastRow() - 1, 8).getValues();
-  let usr = dataTrabajadores.find(r => String(r[3]).toLowerCase() === u.toLowerCase());
-
-  if (!usr || !comparacionTiempoConstante_(calcularHashPBKDF2Emulado_(p, usr[6], config.PASSWORD_PEPPER), usr[5])) {
-    return { success: false, error: 'Usuario o contraseña incorrectos.' };
-  }
-
-  const userCode = String(usr[3] || '').trim().toUpperCase();
-  const perfil = String(usr[2] || '').trim().toUpperCase();
-  const esAdmin = perfil === 'ADMIN' || perfil === 'ADMINISTRADOR' || userCode === 'ADMIN';
-
-  // 2. Buscar Vehículo Asignado en Pestaña FURGOS (Columna A: Matrícula, Columna D: Usuario Asignado)
-  let matriculaAsignada = esAdmin ? 'CENTRAL' : 'CENTRAL';
-  
-  try {
-    const shFurgos = ssTrabajadores.getSheetByName(config.SHEET_FURGOS || 'FURGOS');
-    if (shFurgos && shFurgos.getLastRow() >= 2) {
-      const dataFurgos = shFurgos.getRange(2, 1, shFurgos.getLastRow() - 1, 4).getValues();
-      for (let i = 0; i < dataFurgos.length; i++) {
-        const rowUser = String(dataFurgos[i][3] || '').trim().toUpperCase();
-        const rowMat = String(dataFurgos[i][0] || '').trim().toUpperCase();
-        if (rowUser === userCode && rowMat !== '') {
-          matriculaAsignada = rowMat;
-          break;
-        }
-      }
-    }
-  } catch (e) {
-    console.error('Error buscando vehículo asignado:', e.toString());
-  }
-
-  const token = Utilities.getUuid();
-  const sData = JSON.stringify({
-    usuario: userCode,
-    tecnico: (String(usr[0] || '').trim() + ' ' + String(usr[1] || '').trim()).trim(),
-    perfil: perfil,
-    matricula: matriculaAsignada,
-    esAdmin: esAdmin,
-    lastActivity: Date.now()
-  });
-
-  CacheService.getScriptCache().put('SESSION_' + token, sData, CACHE_TTL_SESSION);
-
-  return {
-    success: true,
-    token: token,
-    tecnico: (String(usr[0] || '').trim() + ' ' + String(usr[1] || '').trim()).trim(),
-    usuario: userCode,
-    matricula: matriculaAsignada,
-    esAdmin: esAdmin
-  };
-}
-
-function apiLogout_(t) {
-  if (t) CacheService.getScriptCache().remove('SESSION_' + t);
-  return { success: true };
-}
-
-// =============================================================================
-// INICIALIZACIÓN CONSOLIDADA (CARGA EN 1 VIAJE)
-// =============================================================================
-
-function apiInitData_(token, reqId) {
-  const sesion = validarYProlongarSesion_(token);
-  if (!sesion) return { success: false, sessionExpired: true, error: 'Sesión expirada.' };
-
-  const rutas = obtenerEstructuraRutasCacheada_(reqId) || {};
-  const catalogoCompleto = obtenerCatalogoYMatrizStock_(sesion.matricula);
-  const efectivoData = calcularSaldoTecnico_(sesion.tecnico, sesion.usuario);
-
-  return {
-    success: true,
-    rutas: rutas,
-    catalogo: catalogoCompleto.catalogoPorCategoria,
-    catalogoMap: catalogoCompleto.catalogoMap,
-    stockFurgon: catalogoCompleto.stockMiFurgo,
-    matriculaAsignada: sesion.matricula,
-    esAdmin: sesion.esAdmin,
-    saldoEfectivo: efectivoData.saldo
-  };
-}
-
-// =============================================================================
-// MATRIZ DE STOCK Y LECTURA
-// =============================================================================
-
-function obtenerCatalogoYMatrizStock_(matriculaFurgon) {
-  const config = obtenerConfiguracion_();
-  const ssMat = SpreadsheetApp.openById(config.SS_MATERIALES_ID);
-  const sheetCat = ssMat.getSheetByName(config.SHEET_CATALOGO_MATERIALES || 'CATALOGO_MATERIALES') || ssMat.getSheets()[0];
-  const lastRow = sheetCat.getLastRow();
-  const lastCol = sheetCat.getLastColumn();
-
-  if (lastRow < 3) return { catalogoPorCategoria: {}, catalogoMap: {}, stockMiFurgo: {} };
-
-  // Fila 1 tiene las matrículas / ubicaciones (G1 = CENTRAL, H1 = 1234AAA, etc.)
-  const fila1Matriculas = sheetCat.getRange(1, 1, 1, lastCol).getValues()[0];
-  const data = sheetCat.getRange(3, 1, lastRow - 2, lastCol).getValues();
-
-  let colIndexFurgo = -1;
-  const normMat = String(matriculaFurgon || '').trim().toUpperCase();
-
-  for (let c = 6; c < fila1Matriculas.length; c++) {
-    if (String(fila1Matriculas[c] || '').trim().toUpperCase() === normMat) {
-      colIndexFurgo = c;
-      break;
-    }
-  }
-
-  const catalogoPorCategoria = {};
-  const catalogoMap = {};
-  const stockMiFurgo = {};
-
-  for (let i = 0; i < data.length; i++) {
-    const row = data[i];
-    const idMat = String(row[0] || '').trim().toUpperCase();
-    const nombre = String(row[1] || '').trim();
-    const categoria = String(row[2] || 'Varios').trim();
-    const unidad = String(row[3] || 'UD').trim();
-
-    if (!idMat || !nombre) continue;
-
-    if (!catalogoPorCategoria[categoria]) catalogoPorCategoria[categoria] = [];
-    catalogoPorCategoria[categoria].push({ id: idMat, nombre: nombre, unidad: unidad });
-
-    catalogoMap[idMat] = { nom: nombre, cat: categoria, uni: unidad, filaIndex: i + 3 };
-
-    if (colIndexFurgo !== -1) {
-      const cant = parseFloat(row[colIndexFurgo]) || 0;
-      if (cant > 0) stockMiFurgo[idMat] = cant;
-    }
-  }
-
-  return {
-    catalogoPorCategoria: catalogoPorCategoria,
-    catalogoMap: catalogoMap,
-    stockMiFurgo: stockMiFurgo
-  };
-}
-
-function apiObtenerStockFurgon_(token, reqId) {
-  const sesion = validarYProlongarSesion_(token);
-  if (!sesion) return { success: false, sessionExpired: true };
-  const res = obtenerCatalogoYMatrizStock_(sesion.matricula);
-  return { success: true, stock: res.stockMiFurgo, matricula: sesion.matricula };
-}
-
-// =============================================================================
-// REGISTRO DE TRASPASOS (CENTRAL <-> VEHÍCULO)
-// =============================================================================
-
-function apiRegistrarTraspasoFurgon_(token, p, reqId) {
-  const sesion = validarYProlongarSesion_(token);
-  if (!sesion) return { success: false, sessionExpired: true };
-
-  const idMaterial = String(p.idMaterial || '').trim().toUpperCase();
-  const cantidad = parseFloat(p.cantidad);
-  const tipoTraspaso = String(p.tipoTraspaso || '').trim();
-  const matricula = sesion.matricula.toUpperCase();
-
-  if (!idMaterial || isNaN(cantidad) || cantidad <= 0) {
-    return { success: false, error: 'Material o cantidad inválidos.' };
-  }
-
-  const config = obtenerConfiguracion_();
-  const idMov = Utilities.getUuid(), ts = new Date().toISOString();
-  const lk = LockService.getScriptLock();
-  lk.waitLock(10000);
-
-  try {
-    const ss = SpreadsheetApp.openById(config.SS_MATERIALES_ID);
-    const shCat = ss.getSheetByName(config.SHEET_CATALOGO_MATERIALES || 'CATALOGO_MATERIALES') || ss.getSheets()[0];
-    const shMov = ss.getSheetByName(config.SHEET_MOV_INVENTARIO || 'MOVIMIENTOS INVENTARIO') || ss.getSheets()[1];
-
-    const lastRow = shCat.getLastRow();
-    const lastCol = shCat.getLastColumn();
-    const fila1 = shCat.getRange(1, 1, 1, lastCol).getValues()[0];
-    const idsCol = shCat.getRange(3, 1, lastRow - 2, 1).getValues();
-
-    let colCentral = -1;
-    let colFurgo = -1;
-
-    for (let c = 6; c < fila1.length; c++) {
-      const headerMat = String(fila1[c] || '').trim().toUpperCase();
-      if (headerMat === 'CENTRAL') colCentral = c + 1;
-      if (headerMat === matricula) colFurgo = c + 1;
-    }
-
-    if (colCentral === -1 || colFurgo === -1) {
-      return { success: false, error: 'No se encontró la columna de la furgoneta o central en la matriz.' };
-    }
-
-    let filaItem = -1;
-    for (let i = 0; i < idsCol.length; i++) {
-      if (String(idsCol[i][0] || '').trim().toUpperCase() === idMaterial) {
-        filaItem = i + 3;
-        break;
-      }
-    }
-
-    if (filaItem === -1) return { success: false, error: 'Material no encontrado en catálogo.' };
-
-    const stockActualCentral = parseFloat(shCat.getRange(filaItem, colCentral).getValue()) || 0;
-    const stockActualFurgo = parseFloat(shCat.getRange(filaItem, colFurgo).getValue()) || 0;
-
-    let nuevoCentral = stockActualCentral;
-    let nuevoFurgo = stockActualFurgo;
-    let origen = '', destino = '', tipoMov = '';
-
-    if (tipoTraspaso === 'CARGA') {
-      nuevoCentral = stockActualCentral - cantidad;
-      nuevoFurgo = stockActualFurgo + cantidad;
-      origen = 'CENTRAL';
-      destino = matricula;
-      tipoMov = 'TRASPASO_FURGON';
-    } else {
-      nuevoCentral = stockActualCentral + cantidad;
-      nuevoFurgo = stockActualFurgo - cantidad;
-      origen = matricula;
-      destino = 'CENTRAL';
-      tipoMov = 'DEVOLUCION_ALMACEN';
-    }
-
-    // Actualizar Matriz
-    shCat.getRange(filaItem, colCentral).setValue(nuevoCentral);
-    shCat.getRange(filaItem, colFurgo).setValue(nuevoFurgo);
-
-    // Escribir en Log MOVIMIENTOS INVENTARIO (Columnas A - I)
-    shMov.getRange(shMov.getLastRow() + 1, 1, 1, 9).setValues([[
-      ts.substring(0, 10), idMaterial, cantidad, tipoMov, origen, destino, idMov, sesion.usuario, sanitizarFormulaSheets_(p.observaciones)
-    ]]);
-
-    return { success: true, idMovimiento: idMov };
-  } finally {
-    lk.releaseLock();
-  }
-}
-
-// =============================================================================
-// REGISTRO DE INTERVENCIONES (VEHÍCULO -> CLIENTE)
-// =============================================================================
-
-function apiRegistrarIntervencion_(token, p, reqId) {
-  const sesion = validarYProlongarSesion_(token);
-  if (!sesion) return { success: false, sessionExpired: true };
-
-  const config = obtenerConfiguracion_();
-  let uEq = '', uAlb = '', fIds = [];
-
-  try {
-    if (p.fotoEquipoBase64) {
-      const r = subirImagenSeguraDrive_(config.DRIVE_FOLDER_ID, p.fotoEquipoBase64, 'EQ', reqId);
-      if (!r.success) throw new Error(r.error);
-      uEq = r.url; fIds.push(r.fileId);
-    }
-    if (p.fotoAlbaranBase64) {
-      const r = subirImagenSeguraDrive_(config.DRIVE_FOLDER_ID, p.fotoAlbaranBase64, 'ALB', reqId);
-      if (!r.success) throw new Error(r.error);
-      uAlb = r.url; fIds.push(r.fileId);
-    }
-
-    const idInt = Utilities.getUuid();
-    const ts = new Date().toISOString();
-    const lk = LockService.getScriptLock();
-    lk.waitLock(10000);
-
-    try {
-      const shHist = SpreadsheetApp.openById(config.SS_HISTORICO_ID).getSheetByName(config.SHEET_HISTORICO);
-      shHist.getRange(shHist.getLastRow() + 1, 1, 1, 15).setValues([[
-        p.fechaMantenimiento, p.idEquipo, sesion.tecnico, p.tipoMantenimiento,
-        sanitizarFormulaSheets_(p.descripcion), p.estadoFinal, p.empresa, p.local,
-        sanitizarFormulaSheets_(p.observaciones), uEq, uAlb, idInt, ts, p.idempotencyKey, sesion.usuario
-      ]]);
-
-      if (Array.isArray(p.materialesUsados) && p.materialesUsados.length > 0) {
-        const ss = SpreadsheetApp.openById(config.SS_MATERIALES_ID);
-        const shCat = ss.getSheetByName(config.SHEET_CATALOGO_MATERIALES || 'CATALOGO_MATERIALES') || ss.getSheets()[0];
-        const shMov = ss.getSheetByName(config.SHEET_MOV_INVENTARIO || 'MOVIMIENTOS INVENTARIO') || ss.getSheets()[1];
-
-        const lastRow = shCat.getLastRow();
-        const lastCol = shCat.getLastColumn();
-        const fila1 = shCat.getRange(1, 1, 1, lastCol).getValues()[0];
-        const idsCol = shCat.getRange(3, 1, lastRow - 2, 1).getValues();
-
-        let colFurgo = -1;
-        const normMat = sesion.matricula.toUpperCase();
-        for (let c = 6; c < fila1.length; c++) {
-          if (String(fila1[c] || '').trim().toUpperCase() === normMat) {
-            colFurgo = c + 1;
-            break;
-          }
-        }
-
-        const filasMovLog = [];
-        const destinoCliente = `${String(p.empresa || '').trim()} - ${String(p.local || '').trim()}`;
-
-        p.materialesUsados.forEach(m => {
-          const idMat = String(m.id || '').trim().toUpperCase();
-          const cant = parseFloat(m.cantidad);
-
-          if (idMat && cant > 0) {
-            if (colFurgo !== -1) {
-              for (let i = 0; i < idsCol.length; i++) {
-                if (String(idsCol[i][0] || '').trim().toUpperCase() === idMat) {
-                  const fIndex = i + 3;
-                  const stActual = parseFloat(shCat.getRange(fIndex, colFurgo).getValue()) || 0;
-                  shCat.getRange(fIndex, colFurgo).setValue(Math.max(0, stActual - cant));
-                  break;
-                }
-              }
-            }
-
-            // ORIGEN = Matrícula | DESTINO = Empresa - Local (Columnas A - I)
-            filasMovLog.push([
-              ts.substring(0, 10), idMat, cant, 'CONSUMO_CLIENTE',
-              normMat, sanitizarFormulaSheets_(destinoCliente),
-              idInt, sesion.usuario, sanitizarFormulaSheets_('Mantenimiento ' + p.idEquipo)
-            ]);
-          }
-        });
-
-        if (filasMovLog.length > 0) {
-          shMov.getRange(shMov.getLastRow() + 1, 1, filasMovLog.length, 9).setValues(filasMovLog);
-        }
-      }
-    } finally {
-      lk.releaseLock();
-    }
-
-    return { success: true, idIntervencion: idInt };
-  } catch (e) {
-    fIds.forEach(id => { try { DriveApp.getFileById(id).setTrashed(true); } catch (x) {} });
-    return { success: false, error: e.message };
-  }
-}
-
-// =============================================================================
-// CARTERA DE EFECTIVO Y RUTAS
-// =============================================================================
-
-function apiObtenerSaldoEfectivo_(token, reqId) {
-  const sesion = validarYProlongarSesion_(token);
-  if (!sesion) return { success: false, sessionExpired: true };
-  const saldoData = calcularSaldoTecnico_(sesion.tecnico, sesion.usuario);
-  return { success: true, saldo: saldoData.saldo, ultimosMovimientos: saldoData.ultimosMovimientos };
-}
-
-function apiRegistrarMovimientoEfectivo_(token, p, reqId) {
-  const sesion = validarYProlongarSesion_(token);
-  if (!sesion) return { success: false, sessionExpired: true };
-
-  const config = obtenerConfiguracion_();
-  let urlFoto = '', fileId = null;
-
-  try {
-    if (p.fotoFacturaBase64) {
-      const rf = subirImagenSeguraDrive_(config.DRIVE_FOLDER_ID, p.fotoFacturaBase64, 'FAC', reqId);
-      if (!rf.success) throw new Error(rf.error);
-      urlFoto = rf.url; fileId = rf.fileId;
-    }
-
-    const idMov = Utilities.getUuid(), ts = new Date().toISOString();
-    const importe = parseFloat(p.importe);
-    const tipo = String(p.tipo || '').toUpperCase();
-    const lk = LockService.getScriptLock();
-    lk.waitLock(10000);
-
-    try {
-      const ss = SpreadsheetApp.openById(config.SS_EFECTIVO_ID);
-      const sh = ss.getSheetByName(config.SHEET_EFECTIVO) || ss.getSheets()[0];
-      const sActual = calcularSaldoTecnico_(sesion.tecnico, sesion.usuario).saldo;
-      const nSaldo = Math.round((tipo === 'INGRESO' ? sActual + importe : sActual - importe) * 100) / 100;
-
-      const fila = [
-        p.fecha, tipo, sanitizarFormulaSheets_(p.proveedor), sanitizarFormulaSheets_(p.concepto),
-        tipo === 'INGRESO' ? importe : '', tipo === 'GASTO' ? importe : '', nSaldo,
-        sesion.tecnico, urlFoto, sanitizarFormulaSheets_(p.comentarios), idMov, ts, p.idempotencyKey, sesion.usuario
-      ];
-      sh.getRange(sh.getLastRow() + 1, 1, 1, 14).setValues([fila]);
-    } finally {
-      lk.releaseLock();
-    }
-
-    return { success: true };
-  } catch (e) {
-    if (fileId) try { DriveApp.getFileById(fileId).setTrashed(true); } catch (x) {}
-    return { success: false, error: e.message };
-  }
-}
-
-function calcularSaldoTecnico_(nombreTecnico, usuarioTecnico) {
-  try {
-    const config = obtenerConfiguracion_();
-    const ss = SpreadsheetApp.openById(config.SS_EFECTIVO_ID);
-    const sh = ss.getSheetByName(config.SHEET_EFECTIVO) || ss.getSheets()[0];
-    const lastRow = sh.getLastRow();
-    if (lastRow < 2) return { saldo: 0, ultimosMovimientos: [] };
-
-    const data = sh.getRange(Math.max(2, lastRow - 3000), 1, Math.min(lastRow - 1, 3000), 14).getValues();
-    const movs = [];
-    let uSaldo = null;
-    const nUsr = String(usuarioTecnico).toLowerCase();
-
-    for (let i = data.length - 1; i >= 0; i--) {
-      if (String(data[i][13]).toLowerCase() === nUsr) {
-        if (uSaldo === null) uSaldo = parseFloat(data[i][6]) || 0;
-        if (movs.length < 5) {
-          movs.push({ 
-            fecha: String(data[i][0]).substring(0, 10), 
-            tipo: data[i][1], 
-            proveedor: data[i][2], 
-            concepto: data[i][3], 
-            importe: parseFloat(data[i][4]) || parseFloat(data[i][5]) 
+  <div class="loader-overlay" id="loaderOverlay">
+    <div class="spinner-border text-info" style="width: 3rem; height: 3rem;" role="status"></div>
+    <div class="mt-3 fw-bold fs-5" id="loaderStatusText">Procesando...</div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+
+  <div class="container py-2" style="max-width: 680px;">
+    
+    <!-- LOGIN LIMPIO -->
+    <div class="card card-custom mb-4" id="viewLogin">
+      <div class="header-box text-center shadow-none mb-0 rounded-0">
+        <h3 class="mb-1"><i class="bi bi-shield-lock text-info me-2"></i>Biokan Auth</h3>
+        <small class="text-white-50">Portal Técnico de Campo</small>
+      </div>
+      <div class="card-body p-4">
+        <form id="formLogin" onsubmit="app.actions.handleLogin(event)">
+          <div class="mb-3">
+            <label class="form-label fw-bold text-secondary">Usuario</label>
+            <input type="text" class="form-control form-control-lg" id="inputUser" required autocomplete="username">
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-bold text-secondary">Contraseña</label>
+            <input type="password" class="form-control form-control-lg" id="inputPass" required autocomplete="current-password">
+          </div>
+          <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnLoginSubmit">Acceder al Sistema</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- MAIN VIEW -->
+    <div class="d-none" id="viewMain">
+      <div class="header-box d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="mb-0 fw-bold" id="labelTecnicoSesion">Técnico</h5>
+          <small class="text-info" id="labelUserCode">TB00</small>
+          <span class="badge bg-warning text-dark ms-2 fw-bold" id="badgeMatriculaFurgo">1234AAA</span>
+        </div>
+        <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="app.actions.handleLogout()"><i class="bi bi-box-arrow-right"></i> Salir</button>
+      </div>
+
+      <!-- MANTENIMIENTO -->
+      <div id="moduleMantenimiento" class="px-2 pb-5">
+        <form id="formIntervencion" onsubmit="app.actions.handleGuardarMantenimiento(event)">
+          <div class="card card-custom p-3 mb-3">
+            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-geo-alt me-1"></i>Ubicación y Equipo</h6>
+            <input type="date" class="form-control mb-3" id="txtFecha" required>
+            <select class="form-select mb-3" id="selEmpresa" onchange="app.handlers.onEmpresaChange()" required>
+              <option value="">-- 1. Empresa Cliente --</option>
+            </select>
+            <select class="form-select mb-3" id="selLocal" onchange="app.handlers.onLocalChange()" required disabled>
+              <option value="">-- 2. Local / Sede --</option>
+            </select>
+            <select class="form-select mb-3" id="selEquipo" onchange="app.handlers.onEquipoChange()" required disabled>
+              <option value="">-- 3. Equipo / Nº Serie --</option>
+            </select>
+            <input type="text" class="form-control bg-light" id="txtModeloEquipo" readonly placeholder="Modelo de equipo">
+          </div>
+
+          <div class="card card-custom p-3 mb-3">
+            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-card-checklist me-1"></i>Detalles del Trabajo</h6>
+            <select class="form-select mb-3" id="selTipoMant" required>
+              <option value="">-- Tipo de Intervención --</option>
+              <option value="Programado">Mantenimiento Programado</option>
+              <option value="Reparacion">Reparación de Avería</option>
+              <option value="Instalacion">Nueva Instalación</option>
+              <option value="Sustitucion">Sustitución de Equipo</option>
+              <option value="Retirada">Retirada de Equipo</option>
+            </select>
+            <select class="form-select mb-3" id="selEstadoFinal" required>
+              <option value="">-- Estado en el que queda el equipo --</option>
+              <option value="Operativo">Operativo (100% Funcional)</option>
+              <option value="Operativo con restricciones">Operativo con restricciones</option>
+              <option value="Fuera de servicio">Fuera de servicio</option>
+              <option value="En espera de repuestos">A la espera de repuestos</option>
+            </select>
+            <textarea class="form-control mb-3" id="taDescripcion" rows="3" required placeholder="Describe las tareas realizadas..."></textarea>
+            <textarea class="form-control" id="taObservaciones" rows="2" placeholder="Observaciones o notas pendientes..."></textarea>
+          </div>
+
+          <!-- MATERIALES UTILIZADOS (FILTRADOS POR VEHÍCULO) -->
+          <div class="card card-custom p-3 mb-3 border-primary border-opacity-25">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="fw-bold text-primary mb-0"><i class="bi bi-box-seam me-1"></i>Materiales Gastados</h6>
+              <button type="button" class="btn btn-sm btn-primary rounded-pill" onclick="app.handlers.agregarFilaMaterial()"><i class="bi bi-plus-lg"></i> Añadir</button>
+            </div>
+            <div id="contenedorMaterialesUsados"></div>
+            <small class="text-muted fst-italic text-center d-block mt-2">Solo aparecen repuestos con existencias en tu vehículo asignado.</small>
+          </div>
+
+          <!-- FOTOS -->
+          <div class="card card-custom p-3 mb-4">
+            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-camera me-1"></i>Fotografías</h6>
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="small fw-bold mb-1">Foto Equipo</label>
+                <input type="file" class="d-none" id="fileCamEquipo" accept="image/*" capture="environment" onchange="app.handlers.onFotoSelected(this, 'equipo')">
+                <input type="file" class="d-none" id="fileGalEquipo" accept="image/*" onchange="app.handlers.onFotoSelected(this, 'equipo')">
+                <div class="d-flex gap-1 mb-2">
+                  <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileCamEquipo').click()"><i class="bi bi-camera"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileGalEquipo').click()"><i class="bi bi-image"></i></button>
+                </div>
+                <div class="preview-container" id="boxPreviewEquipo">
+                  <img id="imgPreviewEquipo" class="d-none">
+                  <small class="text-muted" id="lblPlaceholderEquipo">Vacío</small>
+                </div>
+                <small class="d-block text-center mt-1 text-success fw-bold" id="metaEquipo"></small>
+              </div>
+              
+              <div class="col-6">
+                <label class="small fw-bold mb-1">Foto Albarán</label>
+                <input type="file" class="d-none" id="fileCamAlbaran" accept="image/*" capture="environment" onchange="app.handlers.onFotoSelected(this, 'albaran')">
+                <input type="file" class="d-none" id="fileGalAlbaran" accept="image/*" onchange="app.handlers.onFotoSelected(this, 'albaran')">
+                <div class="d-flex gap-1 mb-2">
+                  <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileCamAlbaran').click()"><i class="bi bi-camera"></i></button>
+                  <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileGalAlbaran').click()"><i class="bi bi-image"></i></button>
+                </div>
+                <div class="preview-container" id="boxPreviewAlbaran">
+                  <img id="imgPreviewAlbaran" class="d-none">
+                  <small class="text-muted" id="lblPlaceholderAlbaran">Vacío</small>
+                </div>
+                <small class="d-block text-center mt-1 text-success fw-bold" id="metaAlbaran"></small>
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5 submit-btn" id="btnGuardarIntervencion">
+            <i class="bi bi-send-check-fill me-2"></i>Enviar Parte de Trabajo
+          </button>
+        </form>
+      </div>
+
+      <!-- EFECTIVO -->
+      <div id="moduleEfectivo" class="d-none px-2 pb-5">
+        <div class="wallet-card mb-4 shadow-sm">
+          <small class="text-white-50 text-uppercase fw-bold"><i class="bi bi-piggy-bank me-1"></i>Saldo en Caja</small>
+          <h1 class="display-4 fw-bold my-1" id="lblSaldoEfectivo">0,00 €</h1>
+        </div>
+
+        <div class="card card-custom p-3 mb-4">
+          <h6 class="fw-bold text-primary mb-3">Registrar Movimiento</h6>
+          <form id="formEfectivo" onsubmit="app.actions.handleGuardarEfectivo(event)">
+            <input type="date" class="form-control mb-3" id="txtFechaEfectivo" required>
+            <select class="form-select mb-3" id="selTipoEfectivo" required>
+              <option value="GASTO">🔴 GASTO (Salida de dinero)</option>
+              <option value="INGRESO">🟢 INGRESO (Entrada de dinero)</option>
+            </select>
+            <div class="input-group mb-3">
+              <span class="input-group-text fw-bold text-success bg-light">€</span>
+              <input type="number" step="0.01" class="form-control form-control-lg fw-bold" id="txtImporteEfectivo" placeholder="0.00" required>
+            </div>
+            <input type="text" class="form-control mb-3" id="txtProveedorEfectivo" placeholder="Proveedor / Entidad" required>
+            <input type="text" class="form-control mb-3" id="txtConceptoEfectivo" placeholder="Concepto del ticket" required>
+            <textarea class="form-control mb-3" id="taComentariosEfectivo" rows="2" placeholder="Observaciones (opcional)"></textarea>
+
+            <label class="small fw-bold mb-2 d-block">Foto del Ticket / Factura</label>
+            <input type="file" class="d-none" id="fileCamFactura" accept="image/*" capture="environment" onchange="app.handlers.onFotoSelected(this, 'factura')">
+            <input type="file" class="d-none" id="fileGalFactura" accept="image/*" onchange="app.handlers.onFotoSelected(this, 'factura')">
+            <div class="d-flex gap-2 mb-2">
+              <button type="button" class="btn btn-outline-dark flex-fill" onclick="document.getElementById('fileCamFactura').click()"><i class="bi bi-camera"></i> Cámara</button>
+              <button type="button" class="btn btn-outline-dark flex-fill" onclick="document.getElementById('fileGalFactura').click()"><i class="bi bi-image"></i> Galería</button>
+            </div>
+            <div class="preview-container" id="boxPreviewFactura">
+              <img id="imgPreviewFactura" class="d-none">
+              <small class="text-muted" id="lblPlaceholderFactura">Ticket sin adjuntar</small>
+            </div>
+            <small class="d-block text-center mt-1 text-success fw-bold mb-3" id="metaFactura"></small>
+
+            <button type="submit" class="btn btn-success w-100 py-3 text-white fs-5 submit-btn" id="btnGuardarEfectivo">
+              <i class="bi bi-check2-circle me-1"></i>Guardar Movimiento
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- FURGON / ALMACÉN -->
+      <div id="moduleFurgon" class="d-none px-2 pb-5">
+        <div class="card card-custom mb-3 border-primary">
+          <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+            <h6 class="fw-bold mb-0 text-primary">
+              <i class="bi bi-truck me-1"></i>Stock en <span id="lblTituloFurgonTab">Vehículo</span>
+            </h6>
+            <button class="btn btn-sm btn-light border rounded-pill" onclick="app.actions.cargarStockFurgon()"><i class="bi bi-arrow-clockwise"></i></button>
+          </div>
+          <div class="table-responsive p-0 m-0">
+            <table class="table table-borderless table-striped mb-0">
+              <tbody id="tbodyStockFurgon"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card card-custom p-3 mb-4 bg-light border">
+          <h6 class="fw-bold text-dark mb-3"><i class="bi bi-box-arrow-in-down me-1"></i>Traspaso de Material</h6>
+          <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)">
+            <select class="form-select mb-2" id="selTipoTraspaso" required>
+              <option value="CARGA">📥 CARGAR de Central ➔ Mi Vehículo</option>
+              <option value="DESCARGA">📤 DEVOLVER de Mi Vehículo ➔ Central</option>
+            </select>
+            <select class="form-select mb-2" id="selCatMatFurgon" onchange="app.handlers.onCatMatFurgonChange()" required>
+              <option value="">-- 1. Categoría --</option>
+            </select>
+            <select class="form-select mb-3" id="selMatFurgon" required disabled>
+              <option value="">-- 2. Material --</option>
+            </select>
+            <div class="row g-2 mb-3">
+              <div class="col-4">
+                <input type="number" step="1" min="1" class="form-control text-center fw-bold" id="txtCantidadFurgon" placeholder="Cant." required>
+              </div>
+              <div class="col-8">
+                <input type="text" class="form-control" id="txtObsFurgon" placeholder="Observaciones">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-dark w-100 py-2 submit-btn" id="btnGuardarFurgon">Confirmar Traspaso</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- BOTTOM BAR -->
+      <div class="bottom-nav d-none" id="bottomNav">
+        <div class="nav-item-bottom active" id="nav-mantenimiento" onclick="app.ui.switchModule('mantenimiento')">
+          <i class="bi bi-tools"></i>Partes
+        </div>
+        <div class="nav-item-bottom" id="nav-efectivo" onclick="app.ui.switchModule('efectivo')">
+          <i class="bi bi-wallet2"></i>Cartera
+        </div>
+        <div class="nav-item-bottom" id="nav-furgon" onclick="app.ui.switchModule('furgon')">
+          <i class="bi bi-truck"></i>Furgón
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const app = {
+      config: {
+        // === PEGA AQUÍ TU URL /exec DE IMPLEMENTACIÓN ===
+        apiUrl: "https://script.google.com/macros/s/AKfycbyU1Vy0Cfaeg8BShQMoLjxhovE0bWU5QTe4K2t2J7eQW21k43j6B0rO7UqM42aW-K7E/exec",
+        maxFileRawBytes: 12582912,
+        maxFinalBytes: 819200,
+        timeoutMs: 35000
+      },
+
+      state: {
+        token: null, tecnico: null, usuario: null, matricula: 'CENTRAL', esAdmin: false,
+        dbRutas: {}, dbCatalogo: {}, catalogoMap: {}, stockFurgonRaw: {},
+        idempotency: { mantenimiento: null, efectivo: null, furgon: null },
+        fotos: { equipo: { base64: '' }, albaran: { base64: '' }, factura: { base64: '' } },
+        formDirty: false
+      },
+
+      ui: {
+        setLoader(show, text = 'Procesando...') {
+          document.getElementById('loaderOverlay').style.display = show ? 'flex' : 'none';
+          document.getElementById('loaderStatusText').textContent = text;
+        },
+        showToast(msg, type = 'success') {
+          const tC = document.getElementById('toastContainer');
+          const toast = document.createElement('div');
+          toast.className = `toast align-items-center text-bg-${type} border-0 show mb-2 shadow`;
+          toast.innerHTML = `<div class="d-flex"><div class="toast-body fw-bold">${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button></div>`;
+          tC.appendChild(toast);
+          setTimeout(() => toast.remove(), 3500);
+        },
+        limpiarSelect(el, text) {
+          el.innerHTML = `<option value="">${text}</option>`;
+        },
+        switchModule(modulo) {
+          ['mantenimiento', 'efectivo', 'furgon'].forEach(m => {
+            document.getElementById('nav-' + m).classList.remove('active');
+            document.getElementById('module' + m.charAt(0).toUpperCase() + m.slice(1)).classList.add('d-none');
           });
-        } else {
-          break;
+          document.getElementById('nav-' + modulo).classList.add('active');
+          document.getElementById('module' + modulo.charAt(0).toUpperCase() + modulo.slice(1)).classList.remove('d-none');
+          if (modulo === 'efectivo') app.actions.cargarSaldoEfectivo();
+          if (modulo === 'furgon') app.actions.cargarStockFurgon();
+        },
+        renderStockFurgonView(stockObj) {
+          const tb = document.getElementById('tbodyStockFurgon');
+          tb.innerHTML = '';
+          const keys = Object.keys(stockObj || {});
+          if (keys.length === 0) {
+            tb.innerHTML = '<tr><td class="text-center text-muted py-3">Sin existencias en este vehículo</td></tr>';
+          } else {
+            keys.sort().forEach(id => {
+              const m = app.state.catalogoMap[id] || { nom: id, cat: 'Varios', uni: 'UD' };
+              tb.innerHTML += `<tr><td><div class="fw-bold">${m.nom}</div><small class="text-muted">${m.cat} | Cód: ${id}</small></td><td class="text-end align-middle"><span class="badge bg-primary fs-6">${stockObj[id]} ${m.uni}</span></td></tr>`;
+            });
+          }
+        },
+        popularSelectoresUI() {
+          const sE = document.getElementById('selEmpresa');
+          app.ui.limpiarSelect(sE, '-- 1. Empresa Cliente --');
+          Object.keys(app.state.dbRutas).sort().forEach(e => sE.innerHTML += `<option value="${e}">${e}</option>`);
+
+          const sCF = document.getElementById('selCatMatFurgon');
+          app.ui.limpiarSelect(sCF, '-- 1. Categoría --');
+          Object.keys(app.state.dbCatalogo).sort().forEach(c => sCF.innerHTML += `<option value="${c}">${c}</option>`);
+        }
+      },
+
+      utils: {
+        async compress(file) {
+          const bmp = await createImageBitmap(file);
+          let w = bmp.width, h = bmp.height, max = 1600, q = 0.78;
+          if (w > max || h > max) {
+            if (w > h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext('2d', { alpha: false });
+          ctx.drawImage(bmp, 0, 0, w, h);
+          let blob;
+          for (let i = 0; i < 4; i++) {
+            blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', q));
+            if (blob.size <= app.config.maxFinalBytes) break;
+            q -= 0.15; canvas.width *= 0.85; canvas.height *= 0.85; ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+          }
+          bmp.close();
+          const b64 = await new Promise(r => { const rd = new FileReader(); rd.onloadend = () => r(rd.result); rd.readAsDataURL(blob); });
+          return { base64: b64, sizeMsg: `${Math.round(file.size / 1024)}KB ➔ ${Math.round(blob.size / 1024)}KB` };
+        },
+        generarIdem(tipo) {
+          const arr = new Uint8Array(16);
+          crypto.getRandomValues(arr);
+          app.state.idempotency[tipo] = 'IDEM_' + Array.from(arr, b => ('0' + b.toString(16)).slice(-2)).join('');
+        }
+      },
+
+      api: {
+        async req(accion, payload = {}) {
+          if (!navigator.onLine) {
+            app.ui.showToast('Sin conexión.', 'danger');
+            throw new Error('OFFLINE');
+          }
+          const body = JSON.stringify({ accion, ...payload });
+          const ctrl = new AbortController();
+          const tid = setTimeout(() => ctrl.abort(), app.config.timeoutMs);
+          try {
+            const res = await fetch(app.config.apiUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body, signal: ctrl.signal });
+            clearTimeout(tid);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            return await res.json();
+          } catch (e) {
+            clearTimeout(tid);
+            throw e;
+          }
+        }
+      },
+
+      handlers: {
+        async onFotoSelected(input, tipo) {
+          app.state.formDirty = true;
+          const file = input.files[0];
+          const cap = tipo.charAt(0).toUpperCase() + tipo.slice(1);
+          if (!file) {
+            document.getElementById('imgPreview' + cap).classList.add('d-none');
+            document.getElementById('lblPlaceholder' + cap).classList.remove('d-none');
+            return;
+          }
+          app.ui.setLoader(true, 'Comprimiendo...');
+          try {
+            const res = await app.utils.compress(file);
+            app.state.fotos[tipo].base64 = res.base64;
+            document.getElementById('imgPreview' + cap).src = res.base64;
+            document.getElementById('imgPreview' + cap).classList.remove('d-none');
+            document.getElementById('lblPlaceholder' + cap).classList.add('d-none');
+            document.getElementById('meta' + cap).textContent = `✔ (${res.sizeMsg})`;
+          } catch (e) {
+            app.ui.showToast('Error en foto', 'danger');
+          } finally {
+            app.ui.setLoader(false);
+          }
+        },
+
+        onEmpresaChange() {
+          app.state.formDirty = true;
+          const emp = document.getElementById('selEmpresa').value, sL = document.getElementById('selLocal'), sE = document.getElementById('selEquipo');
+          app.ui.limpiarSelect(sL, '-- 2. Local / Sede --');
+          app.ui.limpiarSelect(sE, '-- 3. Equipo --');
+          sE.disabled = true;
+          document.getElementById('txtModeloEquipo').value = '';
+          if (emp && app.state.dbRutas[emp]) {
+            Object.keys(app.state.dbRutas[emp]).sort().forEach(l => sL.innerHTML += `<option value="${l}">${l}</option>`);
+            sL.disabled = false;
+          } else sL.disabled = true;
+        },
+
+        onLocalChange() {
+          const emp = document.getElementById('selEmpresa').value, loc = document.getElementById('selLocal').value, sE = document.getElementById('selEquipo');
+          app.ui.limpiarSelect(sE, '-- 3. Equipo --');
+          document.getElementById('txtModeloEquipo').value = '';
+          if (loc && app.state.dbRutas[emp][loc]) {
+            app.state.dbRutas[emp][loc].forEach(eq => sE.innerHTML += `<option value="${eq.idEquipo}" data-mod="${eq.modelo}">${eq.idEquipo} (${eq.modelo})</option>`);
+            sE.disabled = false;
+          } else sE.disabled = true;
+        },
+
+        onEquipoChange() {
+          const opt = document.getElementById('selEquipo').selectedOptions[0];
+          document.getElementById('txtModeloEquipo').value = opt ? opt.getAttribute('data-mod') : '';
+        },
+
+        onCatMatFurgonChange() {
+          const cat = document.getElementById('selCatMatFurgon').value, sM = document.getElementById('selMatFurgon');
+          app.ui.limpiarSelect(sM, '-- 2. Material --');
+          if (cat && app.state.dbCatalogo[cat]) {
+            app.state.dbCatalogo[cat].forEach(m => sM.innerHTML += `<option value="${m.id}">${m.nombre} (${m.unidad})</option>`);
+            sM.disabled = false;
+          } else sM.disabled = true;
+        },
+
+        agregarFilaMaterial() {
+          app.state.formDirty = true;
+          const div = document.createElement('div');
+          div.className = 'mat-row';
+          const rId = 'r_' + Date.now();
+          div.id = rId;
+
+          const catsInFurgon = new Set();
+          Object.keys(app.state.stockFurgonRaw || {}).forEach(id => {
+            if (app.state.catalogoMap[id]) catsInFurgon.add(app.state.catalogoMap[id].cat);
+          });
+
+          if (catsInFurgon.size === 0) {
+            app.ui.showToast('Esta furgoneta no tiene stock cargado.', 'warning');
+            return;
+          }
+
+          let cats = '<option value="">-- Categoría en Furgón --</option>';
+          Array.from(catsInFurgon).sort().forEach(c => cats += `<option value="${c}">${c}</option>`);
+
+          div.innerHTML = `
+            <div class="row g-2 mb-2">
+              <div class="col-12"><select class="form-select sel-cat" onchange="app.handlers.llenarMatRow(this)">${cats}</select></div>
+              <div class="col-12"><select class="form-select sel-mat" disabled><option value="">-- Material disponible --</option></select></div>
+            </div>
+            <div class="d-flex gap-2">
+              <input type="number" class="form-control txt-qty" placeholder="Cantidad" min="1">
+              <button type="button" class="btn btn-outline-danger" onclick="document.getElementById('${rId}').remove()"><i class="bi bi-trash"></i></button>
+            </div>
+          `;
+          document.getElementById('contenedorMaterialesUsados').appendChild(div);
+        },
+
+        llenarMatRow(selCat) {
+          const cat = selCat.value, sM = selCat.parentElement.parentElement.querySelector('.sel-mat');
+          app.ui.limpiarSelect(sM, '-- Material disponible --');
+          if (cat) {
+            Object.keys(app.state.stockFurgonRaw || {}).forEach(id => {
+              const info = app.state.catalogoMap[id];
+              if (info && info.cat === cat) {
+                const maxQty = app.state.stockFurgonRaw[id];
+                sM.innerHTML += `<option value="${id}">${info.nom} (Disp: ${maxQty} ${info.uni})</option>`;
+              }
+            });
+            sM.disabled = false;
+          } else {
+            sM.disabled = true;
+          }
+        }
+      },
+
+      actions: {
+        async handleLogin(e) {
+          e.preventDefault();
+          const u = document.getElementById('inputUser').value.trim();
+          const p = document.getElementById('inputPass').value.trim();
+
+          app.ui.setLoader(true, 'Autenticando...');
+          try {
+            const res = await app.api.req('login', { usuario: u, clave: p });
+            if (res.success) {
+              sessionStorage.setItem('T', res.token);
+              sessionStorage.setItem('TE', res.tecnico);
+              sessionStorage.setItem('US', res.usuario);
+              sessionStorage.setItem('MAT', res.matricula);
+              sessionStorage.setItem('ADM', res.esAdmin ? '1' : '0');
+
+              app.state.token = res.token;
+              app.state.tecnico = res.tecnico;
+              app.state.usuario = res.usuario;
+              app.state.matricula = res.matricula;
+              app.state.esAdmin = res.esAdmin;
+
+              app.actions.boot();
+            } else {
+              app.ui.showToast(res.error || 'Credenciales incorrectas', 'danger');
+            }
+          } catch (e) {
+            app.ui.showToast('Error de comunicación con el servidor', 'danger');
+          } finally {
+            app.ui.setLoader(false);
+          }
+        },
+
+        handleLogout() {
+          sessionStorage.clear();
+          localStorage.removeItem('BK_CACHE_DATA');
+          location.reload();
+        },
+
+        async boot() {
+          document.getElementById('viewLogin').classList.add('d-none');
+          document.getElementById('viewMain').classList.remove('d-none');
+          document.getElementById('bottomNav').classList.remove('d-none');
+          
+          document.getElementById('labelTecnicoSesion').textContent = app.state.tecnico;
+          document.getElementById('labelUserCode').textContent = app.state.usuario;
+          document.getElementById('badgeMatriculaFurgo').textContent = app.state.matricula;
+          document.getElementById('lblTituloFurgonTab').textContent = app.state.esAdmin ? 'Almacén Central' : `Furgón ${app.state.matricula}`;
+
+          document.getElementById('txtFecha').valueAsDate = new Date();
+          document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
+
+          app.ui.setLoader(true, 'Sincronizando...');
+          try {
+            const res = await app.api.req('initData', { token: app.state.token });
+            if (res.sessionExpired) {
+              app.actions.handleLogout();
+              return;
+            }
+            if (res.success) {
+              app.state.dbRutas = res.rutas || {};
+              app.state.dbCatalogo = res.catalogo || {};
+              app.state.catalogoMap = res.catalogoMap || {};
+              app.state.stockFurgonRaw = res.stockFurgon || {};
+
+              app.ui.popularSelectoresUI();
+              app.ui.renderStockFurgonView(app.state.stockFurgonRaw);
+              document.getElementById('lblSaldoEfectivo').textContent = parseFloat(res.saldoEfectivo || 0).toFixed(2) + ' €';
+            }
+          } catch (e) {
+            app.ui.showToast('Modo sin conexión', 'warning');
+          } finally {
+            app.ui.setLoader(false);
+          }
+        },
+
+        async cargarSaldoEfectivo() {
+          try {
+            const res = await app.api.req('obtenerSaldoEfectivo', { token: app.state.token });
+            if (res.success) document.getElementById('lblSaldoEfectivo').textContent = parseFloat(res.saldo).toFixed(2) + ' €';
+          } catch (e) {}
+        },
+
+        async cargarStockFurgon() {
+          try {
+            const res = await app.api.req('obtenerStockFurgon', { token: app.state.token });
+            if (res.success) {
+              app.state.stockFurgonRaw = res.stock || {};
+              app.ui.renderStockFurgonView(res.stock);
+            }
+          } catch (e) {}
+        },
+
+        async handleGuardarMantenimiento(e) {
+          e.preventDefault();
+          const btns = document.querySelectorAll('.submit-btn');
+          btns.forEach(b => b.disabled = true);
+          app.ui.setLoader(true, 'Registrando intervención...');
+
+          if (!app.state.idempotency.mantenimiento) app.utils.generarIdem('mantenimiento');
+          const mat = [];
+          document.querySelectorAll('.mat-row').forEach(r => {
+            const id = r.querySelector('.sel-mat').value, c = parseFloat(r.querySelector('.txt-qty').value);
+            if (id && c > 0) mat.push({ id: id, cantidad: c });
+          });
+
+          try {
+            const res = await app.api.req('registrarIntervencion', {
+              token: app.state.token,
+              payload: {
+                idempotencyKey: app.state.idempotency.mantenimiento,
+                fechaMantenimiento: document.getElementById('txtFecha').value,
+                empresa: document.getElementById('selEmpresa').value,
+                local: document.getElementById('selLocal').value,
+                idEquipo: document.getElementById('selEquipo').value,
+                tipoMantenimiento: document.getElementById('selTipoMant').value,
+                estadoFinal: document.getElementById('selEstadoFinal').value,
+                descripcion: document.getElementById('taDescripcion').value,
+                observaciones: document.getElementById('taObservaciones').value,
+                fotoEquipoBase64: app.state.fotos.equipo.base64,
+                fotoAlbaranBase64: app.state.fotos.albaran.base64,
+                materialesUsados: mat
+              }
+            });
+
+            if (res.success) {
+              app.ui.showToast('✅ Parte registrado', 'success');
+              document.getElementById('formIntervencion').reset();
+              document.getElementById('txtFecha').valueAsDate = new Date();
+              document.getElementById('contenedorMaterialesUsados').innerHTML = '';
+              app.state.fotos.equipo.base64 = ''; app.state.fotos.albaran.base64 = '';
+              document.getElementById('imgPreviewEquipo').classList.add('d-none');
+              document.getElementById('imgPreviewAlbaran').classList.add('d-none');
+              document.getElementById('lblPlaceholderEquipo').classList.remove('d-none');
+              document.getElementById('lblPlaceholderAlbaran').classList.remove('d-none');
+              document.getElementById('metaEquipo').textContent = '';
+              document.getElementById('metaAlbaran').textContent = '';
+              app.state.idempotency.mantenimiento = null;
+              app.state.formDirty = false;
+              app.actions.cargarStockFurgon();
+            } else {
+              app.ui.showToast(res.error || 'Error al guardar', 'danger');
+            }
+          } catch (e) {
+            app.ui.showToast('Error de comunicación', 'danger');
+          } finally {
+            btns.forEach(b => b.disabled = false);
+            app.ui.setLoader(false);
+          }
+        },
+
+        async handleGuardarEfectivo(e) {
+          e.preventDefault();
+          const btns = document.querySelectorAll('.submit-btn');
+          btns.forEach(b => b.disabled = true);
+          app.ui.setLoader(true, 'Guardando movimiento...');
+
+          if (!app.state.idempotency.efectivo) app.utils.generarIdem('efectivo');
+
+          try {
+            const res = await app.api.req('registrarMovimientoEfectivo', {
+              token: app.state.token,
+              payload: {
+                idempotencyKey: app.state.idempotency.efectivo,
+                fecha: document.getElementById('txtFechaEfectivo').value,
+                tipo: document.getElementById('selTipoEfectivo').value,
+                importe: document.getElementById('txtImporteEfectivo').value,
+                proveedor: document.getElementById('txtProveedorEfectivo').value,
+                concepto: document.getElementById('txtConceptoEfectivo').value,
+                comentarios: document.getElementById('taComentariosEfectivo').value,
+                fotoFacturaBase64: app.state.fotos.factura.base64
+              }
+            });
+
+            if (res.success) {
+              app.ui.showToast('✅ Movimiento registrado', 'success');
+              document.getElementById('formEfectivo').reset();
+              document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
+              app.state.fotos.factura.base64 = '';
+              document.getElementById('imgPreviewFactura').classList.add('d-none');
+              document.getElementById('lblPlaceholderFactura').classList.remove('d-none');
+              document.getElementById('metaFactura').textContent = '';
+              app.state.idempotency.efectivo = null;
+              app.actions.cargarSaldoEfectivo();
+            } else {
+              app.ui.showToast(res.error || 'Error al guardar', 'danger');
+            }
+          } catch (e) {
+            app.ui.showToast('Error al enviar movimiento', 'danger');
+          } finally {
+            btns.forEach(b => b.disabled = false);
+            app.ui.setLoader(false);
+          }
+        },
+
+        async handleGuardarTraspasoFurgon(e) {
+          e.preventDefault();
+          const btns = document.querySelectorAll('.submit-btn');
+          btns.forEach(b => b.disabled = true);
+          app.ui.setLoader(true, 'Guardando traspaso...');
+
+          if (!app.state.idempotency.furgon) app.utils.generarIdem('furgon');
+
+          try {
+            const res = await app.api.req('registrarTraspasoFurgon', {
+              token: app.state.token,
+              payload: {
+                idempotencyKey: app.state.idempotency.furgon,
+                tipoTraspaso: document.getElementById('selTipoTraspaso').value,
+                idMaterial: document.getElementById('selMatFurgon').value,
+                cantidad: document.getElementById('txtCantidadFurgon').value,
+                observaciones: document.getElementById('txtObsFurgon').value
+              }
+            });
+
+            if (res.success) {
+              app.ui.showToast('✅ Matriz actualizada', 'success');
+              document.getElementById('formFurgon').reset();
+              document.getElementById('selMatFurgon').disabled = true;
+              app.state.idempotency.furgon = null;
+              await app.actions.boot();
+            } else {
+              app.ui.showToast(res.error || 'Error en traspaso', 'danger');
+            }
+          } catch (e) {
+            app.ui.showToast('Error de red', 'danger');
+          } finally {
+            btns.forEach(b => b.disabled = false);
+            app.ui.setLoader(false);
+          }
         }
       }
-    }
-    return { saldo: uSaldo !== null ? Math.round(uSaldo * 100) / 100 : 0, ultimosMovimientos: movs };
-  } catch (e) {
-    return { saldo: 0, ultimosMovimientos: [] };
-  }
-}
+    };
 
-function validarYProlongarSesion_(t) {
-  if (!t) return null;
-  const c = CacheService.getScriptCache();
-  const s = c.get('SESSION_' + t);
-  if (!s) return null;
-  const p = JSON.parse(s);
-  p.lastActivity = Date.now();
-  c.put('SESSION_' + t, JSON.stringify(p), CACHE_TTL_SESSION);
-  return p;
-}
+    window.addEventListener('online', () => { document.getElementById('offlineWarning').style.display = 'none'; app.ui.showToast('Conectado', 'success'); });
+    window.addEventListener('offline', () => { document.getElementById('offlineWarning').style.display = 'block'; });
+    window.addEventListener('beforeunload', (e) => { if (app.state.formDirty) { e.preventDefault(); e.returnValue = ''; } });
 
-function obtenerEstructuraRutasCacheada_(reqId) {
-  const config = obtenerConfiguracion_();
-  const ss = SpreadsheetApp.openById(config.SS_RUTAS_ID);
-  const sheet = ss.getSheetByName(config.SHEET_RUTAS);
-  if (!sheet) return {};
-
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) return {};
-
-  const data = sheet.getRange(2, 2, lastRow - 1, 7).getValues();
-  const estructura = {};
-
-  for (let i = 0; i < data.length; i++) {
-    const local = String(data[i][0] || '').trim();
-    const empresa = String(data[i][1] || '').trim();
-    const modelo = String(data[i][5] || '').trim();
-    const idEquipo = String(data[i][6] || '').trim();
-
-    if (!empresa || !local || !idEquipo) continue;
-    if (!estructura[empresa]) estructura[empresa] = {};
-    if (!estructura[empresa][local]) estructura[empresa][local] = [];
-    estructura[empresa][local].push({ idEquipo: idEquipo, modelo: modelo || '-' });
-  }
-
-  return estructura;
-}
-
-function sanitizarFormulaSheets_(t) { return String(t || '').replace(/^[=+\-@]/, "'$&").trim(); }
-function calcularHashPBKDF2Emulado_(p, s, pe) { let h = p + s + pe; for (let i = 0; i < 1000; i++) { h = Utilities.computeHmacSha256Signature(h, pe + s).map(b => ('0' + (b & 0xFF).toString(16)).slice(-2)).join(''); } return h; }
-function comparacionTiempoConstante_(a, b) { if (a.length !== b.length) return false; let r = 0; for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i); return r === 0; }
-function responderJSON_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-function obtenerConfiguracion_() { return PropertiesService.getScriptProperties().getProperties(); }
-
-function subirImagenSeguraDrive_(fId, b64, p, req) {
-  const m = b64.match(/^data:(image\/(jpeg|png|webp));base64,(.+)$/);
-  const blob = Utilities.newBlob(Utilities.base64Decode(m[3]), m[1], p + '_' + Utilities.getUuid() + '.jpg');
-  const d = new Date(), y = d.getUTCFullYear().toString(), mo = ('0' + (d.getUTCMonth() + 1)).slice(-2);
-  const root = DriveApp.getFolderById(fId);
-  let yF = root.getFoldersByName(y).hasNext() ? root.getFoldersByName(y).next() : root.createFolder(y);
-  let mF = yF.getFoldersByName(mo).hasNext() ? yF.getFoldersByName(mo).next() : yF.createFolder(mo);
-  const file = mF.createFile(blob);
-  file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
-  return { success: true, fileId: file.getId(), url: file.getUrl() };
-}
-
-// =============================================================================
-// UTILIDAD ADMINISTRATIVA: GENERACIÓN DE HASH Y SALT POR LOTES
-// =============================================================================
-
-function ADMIN_PROCESAR_TODAS_LAS_CONTRASEÑAS() {
-  const config = obtenerConfiguracion_();
-  const ss = SpreadsheetApp.openById(config.SS_TRABAJADORES_ID);
-  const sheet = ss.getSheetByName(config.SHEET_TRABAJADORES || 'DATOS TRABAJADORES');
-
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) {
-    console.warn('No hay registros de trabajadores en la hoja.');
-    return;
-  }
-
-  // Columnas D (USUARIO) y E (CLAVE)
-  const range = sheet.getRange(2, 4, lastRow - 1, 2);
-  const data = range.getValues();
-  const updatesHashSalt = [];
-
-  for (let i = 0; i < data.length; i++) {
-    const usuario = String(data[i][0] || '').trim();
-    const clavePlana = String(data[i][1] || '').trim();
-
-    if (usuario !== '' && clavePlana !== '') {
-      const salt = Utilities.getUuid().replace(/-/g, '').substring(0, 16);
-      const hash = calcularHashPBKDF2Emulado_(clavePlana, salt, config.PASSWORD_PEPPER);
-      updatesHashSalt.push([hash, salt]);
-      console.log(`✔ Procesado: ${usuario} (Clave: ${clavePlana})`);
-    } else {
-      updatesHashSalt.push(['', '']);
-    }
-  }
-
-  // Escribir en Columnas F (PASSWORD_HASH) y G (PASSWORD_SALT)
-  sheet.getRange(2, 6, updatesHashSalt.length, 2).setValues(updatesHashSalt);
-  console.log('✅ Todas las contraseñas han sido hasheadas y guardadas con éxito.');
-}
+    document.addEventListener('DOMContentLoaded', () => {
+      const t = sessionStorage.getItem('T'), te = sessionStorage.getItem('TE'), u = sessionStorage.getItem('US'), mat = sessionStorage.getItem('MAT'), adm = sessionStorage.getItem('ADM');
+      if (t && te && u) {
+        app.state.token = t; app.state.tecnico = te; app.state.usuario = u; app.state.matricula = mat || 'CENTRAL'; app.state.esAdmin = adm === '1';
+        app.actions.boot();
+      }
+    });
+  </script>
+</body>
+</html>
