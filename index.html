@@ -419,19 +419,31 @@
         }
       },
 
-      api: {
+api: {
         async req(accion, payload = {}) {
           if (!navigator.onLine) {
             app.ui.showToast('Sin conexión.', 'danger');
             throw new Error('OFFLINE');
           }
+          
           const body = JSON.stringify({ accion, ...payload });
           const ctrl = new AbortController();
           const tid = setTimeout(() => ctrl.abort(), app.config.timeoutMs);
+          
           try {
-            const res = await fetch(app.config.apiUrl, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body, signal: ctrl.signal });
+            const res = await fetch(app.config.apiUrl, {
+              method: 'POST',
+              body: body,
+              redirect: 'follow',
+              signal: ctrl.signal
+            });
+            
             clearTimeout(tid);
-            if (!res.ok) throw new Error('HTTP ' + res.status);
+            
+            if (!res.ok) {
+              throw new Error('HTTP ' + res.status);
+            }
+            
             return await res.json();
           } catch (e) {
             clearTimeout(tid);
