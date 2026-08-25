@@ -73,22 +73,38 @@
         <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="app.actions.handleLogout()"><i class="bi bi-box-arrow-right"></i> Salir</button>
       </div>
 
-      <!-- MÓDULO 1: MANTENIMIENTO (SÓLO PARA TÉCNICOS) -->
+      <!-- MÓDULO 1: MANTENIMIENTO (SÓLO TÉCNICOS) -->
       <div id="moduleMantenimiento" class="px-2 pb-5">
         <form id="formIntervencion" onsubmit="app.actions.handleGuardarMantenimiento(event)">
           <div class="card card-custom p-3 mb-3">
             <h6 class="fw-bold text-primary mb-3"><i class="bi bi-geo-alt me-1"></i>Ubicación y Equipo</h6>
             <input type="date" class="form-control mb-3" id="txtFecha" required>
-            <select class="form-select mb-3" id="selEmpresa" onchange="app.handlers.onEmpresaChange()" required>
-              <option value="">-- 1. Empresa Cliente --</option>
-            </select>
-            <select class="form-select mb-3" id="selLocal" onchange="app.handlers.onLocalChange()" required disabled>
-              <option value="">-- 2. Local / Sede --</option>
-            </select>
-            <select class="form-select mb-3" id="selEquipo" onchange="app.handlers.onEquipoChange()" required disabled>
-              <option value="">-- 3. Equipo / Nº Serie --</option>
-            </select>
-            <input type="text" class="form-control bg-light" id="txtModeloEquipo" readonly placeholder="Modelo de equipo">
+            
+            <!-- BUSCADOR PREDICTIVO DE CLIENTES -->
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-secondary">1. Empresa (Cliente) *</label>
+              <div class="input-group">
+                <span class="input-group-text bg-white text-primary"><i class="bi bi-search"></i></span>
+                <input class="form-control" list="dlEmpresas" id="inputEmpresaSearch" placeholder="Escribe para buscar cliente..." oninput="app.handlers.onEmpresaSearchInput()" autocomplete="off" required>
+                <datalist id="dlEmpresas"></datalist>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-secondary">2. Sede / Local *</label>
+              <select class="form-select" id="selLocal" onchange="app.handlers.onLocalChange()" required disabled>
+                <option value="">-- Seleccionar Sede / Local --</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-secondary">3. Equipo / Nº Serie *</label>
+              <select class="form-select" id="selEquipo" onchange="app.handlers.onEquipoChange()" required disabled>
+                <option value="">-- Seleccionar Equipo --</option>
+              </select>
+            </div>
+
+            <input type="text" class="form-control bg-light" id="txtModeloEquipo" readonly placeholder="Modelo de equipo autocompletado">
           </div>
 
           <div class="card card-custom p-3 mb-3">
@@ -226,15 +242,11 @@
         <div class="card card-custom p-3 mb-4 bg-light border">
           <h6 class="fw-bold text-dark mb-3"><i class="bi bi-arrow-left-right me-1"></i>Movimiento de Almacén</h6>
           <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)">
-            
             <div class="mb-3">
               <label class="form-label fw-bold small text-secondary">Tipo de Movimiento *</label>
-              <select class="form-select" id="selTipoTraspaso" required>
-                <!-- Se llena dinámicamente según sea ADMIN o TÉCNICO -->
-              </select>
+              <select class="form-select" id="selTipoTraspaso" required></select>
             </div>
 
-            <!-- CONTENEDOR DE LÍNEAS MULTI-MATERIAL EN TRASPASOS -->
             <div class="mb-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <label class="form-label fw-bold small text-secondary mb-0">Materiales a Mover *</label>
@@ -271,7 +283,7 @@
   <script>
     const app = {
       config: {
-        apiUrl: "https://script.google.com/macros/s/AKfycbyQyiOnMqtMvxC4f3YiLaasRFydqaaboGcFEgP-daVAifbJo0CY-ZuU2wH8AR1TLfuV/exec",
+        apiUrl: "https://script.google.com/macros/s/AKfycbyU1Vy0Cfaeg8BShQMoLjxhovE0bWU5QTe4K2t2J7eQW21k43j6B0rO7UqM42aW-K7E/exec",
         maxFileRawBytes: 12582912,
         maxFinalBytes: 819200,
         timeoutMs: 35000
@@ -330,9 +342,14 @@
           }
         },
         popularSelectoresUI() {
-          const sE = document.getElementById('selEmpresa');
-          app.ui.limpiarSelect(sE, '-- 1. Empresa Cliente --');
-          Object.keys(app.state.dbRutas).sort().forEach(e => sE.innerHTML += `<option value="${e}">${e}</option>`);
+          // Llenar datalist de Empresas
+          const dl = document.getElementById('dlEmpresas');
+          dl.innerHTML = '';
+          Object.keys(app.state.dbRutas).sort().forEach(emp => {
+            const opt = document.createElement('option');
+            opt.value = emp;
+            dl.appendChild(opt);
+          });
 
           // Configurar Opciones de Traspaso según Rol
           const selTraspaso = document.getElementById('selTipoTraspaso');
@@ -357,7 +374,6 @@
           const lblTitulo = document.getElementById('lblTituloFurgonTab');
 
           if (app.state.esAdmin) {
-            // Ocultar pestaña Partes
             if (navMant) navMant.classList.add('d-none');
             if (modMant) modMant.classList.add('d-none');
 
@@ -449,27 +465,44 @@
           }
         },
 
-        onEmpresaChange() {
+        onEmpresaSearchInput() {
           app.state.formDirty = true;
-          const emp = document.getElementById('selEmpresa').value, sL = document.getElementById('selLocal'), sE = document.getElementById('selEquipo');
-          app.ui.limpiarSelect(sL, '-- 2. Local / Sede --');
-          app.ui.limpiarSelect(sE, '-- 3. Equipo --');
-          sE.disabled = true;
+          const val = document.getElementById('inputEmpresaSearch').value.trim();
+          const sL = document.getElementById('selLocal');
+          const sE = document.getElementById('selEquipo');
           document.getElementById('txtModeloEquipo').value = '';
-          if (emp && app.state.dbRutas[emp]) {
-            Object.keys(app.state.dbRutas[emp]).sort().forEach(l => sL.innerHTML += `<option value="${l}">${l}</option>`);
+
+          app.ui.limpiarSelect(sL, '-- 2. Seleccionar Sede / Local --');
+          app.ui.limpiarSelect(sE, '-- 3. Seleccionar Equipo --');
+          sE.disabled = true;
+
+          // Si el texto coincide exactamente con una empresa de la BD, desbloquea las sedes
+          if (val && app.state.dbRutas[val]) {
+            Object.keys(app.state.dbRutas[val]).sort().forEach(l => {
+              sL.innerHTML += `<option value="${l}">${l}</option>`;
+            });
             sL.disabled = false;
-          } else sL.disabled = true;
+          } else {
+            sL.disabled = true;
+          }
         },
 
         onLocalChange() {
-          const emp = document.getElementById('selEmpresa').value, loc = document.getElementById('selLocal').value, sE = document.getElementById('selEquipo');
-          app.ui.limpiarSelect(sE, '-- 3. Equipo --');
+          const emp = document.getElementById('inputEmpresaSearch').value.trim();
+          const loc = document.getElementById('selLocal').value;
+          const sE = document.getElementById('selEquipo');
           document.getElementById('txtModeloEquipo').value = '';
-          if (loc && app.state.dbRutas[emp][loc]) {
-            app.state.dbRutas[emp][loc].forEach(eq => sE.innerHTML += `<option value="${eq.idEquipo}" data-mod="${eq.modelo}">${eq.idEquipo} (${eq.modelo})</option>`);
+
+          app.ui.limpiarSelect(sE, '-- 3. Seleccionar Equipo --');
+
+          if (loc && app.state.dbRutas[emp] && app.state.dbRutas[emp][loc]) {
+            app.state.dbRutas[emp][loc].forEach(eq => {
+              sE.innerHTML += `<option value="${eq.idEquipo}" data-mod="${eq.modelo}">${eq.idEquipo} (${eq.modelo})</option>`;
+            });
             sE.disabled = false;
-          } else sE.disabled = true;
+          } else {
+            sE.disabled = true;
+          }
         },
 
         onEquipoChange() {
@@ -488,7 +521,6 @@
           let catsHtml = '<option value="">-- Categoría --</option>';
 
           if (filtrarSoloStockPropio) {
-            // Filtrar solo categorías que existan en el stock asignado
             const catsDisponibles = new Set();
             Object.keys(app.state.stockFurgonRaw || {}).forEach(id => {
               if (app.state.catalogoMap[id]) catsDisponibles.add(app.state.catalogoMap[id].cat);
@@ -499,7 +531,6 @@
             }
             Array.from(catsDisponibles).sort().forEach(c => catsHtml += `<option value="${c}">${c}</option>`);
           } else {
-            // Mostrar todas las categorías del catálogo maestro
             Object.keys(app.state.dbCatalogo).sort().forEach(c => catsHtml += `<option value="${c}">${c}</option>`);
           }
 
@@ -615,7 +646,7 @@
               document.getElementById('lblSaldoEfectivo').textContent = parseFloat(res.saldoEfectivo || 0).toFixed(2) + ' €';
             }
           } catch (e) {
-            app.ui.showToast('Modo sin conexión', 'warning');
+            app.ui.showToast('Modo sin conexión activado', 'warning');
           } finally {
             app.ui.setLoader(false);
           }
@@ -640,6 +671,12 @@
 
         async handleGuardarMantenimiento(e) {
           e.preventDefault();
+          const emp = document.getElementById('inputEmpresaSearch').value.trim();
+          if (!app.state.dbRutas[emp]) {
+            app.ui.showToast('Seleccione un cliente válido de la lista.', 'warning');
+            return;
+          }
+
           const btns = document.querySelectorAll('.submit-btn');
           btns.forEach(b => b.disabled = true);
           app.ui.setLoader(true, 'Registrando intervención...');
@@ -657,7 +694,7 @@
               payload: {
                 idempotencyKey: app.state.idempotency.mantenimiento,
                 fechaMantenimiento: document.getElementById('txtFecha').value,
-                empresa: document.getElementById('selEmpresa').value,
+                empresa: emp,
                 local: document.getElementById('selLocal').value,
                 idEquipo: document.getElementById('selEquipo').value,
                 tipoMantenimiento: document.getElementById('selTipoMant').value,
@@ -675,6 +712,8 @@
               document.getElementById('formIntervencion').reset();
               document.getElementById('txtFecha').valueAsDate = new Date();
               document.getElementById('contenedorMaterialesUsados').innerHTML = '';
+              document.getElementById('selLocal').disabled = true;
+              document.getElementById('selEquipo').disabled = true;
               app.state.fotos.equipo.base64 = ''; app.state.fotos.albaran.base64 = '';
               document.getElementById('imgPreviewEquipo').classList.add('d-none');
               document.getElementById('imgPreviewAlbaran').classList.add('d-none');
