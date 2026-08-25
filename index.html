@@ -41,7 +41,7 @@
 
   <div class="container py-2" style="max-width: 680px;">
     
-    <!-- LOGIN CON SELECTOR DE FURGONETA -->
+    <!-- LOGIN LIMPIO -->
     <div class="card card-custom mb-4" id="viewLogin">
       <div class="header-box text-center shadow-none mb-0 rounded-0">
         <h3 class="mb-1"><i class="bi bi-shield-lock text-info me-2"></i>Biokan Auth</h3>
@@ -51,17 +51,11 @@
         <form id="formLogin" onsubmit="app.actions.handleLogin(event)">
           <div class="mb-3">
             <label class="form-label fw-bold text-secondary">Usuario</label>
-            <input type="text" class="form-control form-control-lg" id="inputUser" required autocomplete="username" oninput="app.handlers.onUserInputChange()">
+            <input type="text" class="form-control form-control-lg" id="inputUser" required autocomplete="username">
           </div>
-          <div class="mb-3">
+          <div class="mb-4">
             <label class="form-label fw-bold text-secondary">Contraseña</label>
             <input type="password" class="form-control form-control-lg" id="inputPass" required autocomplete="current-password">
-          </div>
-          <div class="mb-4" id="boxSelectorFurgoLogin">
-            <label class="form-label fw-bold text-secondary"><i class="bi bi-truck me-1 text-primary"></i>Furgoneta del Turno *</label>
-            <select class="form-select form-select-lg" id="selFurgoLogin" required>
-              <option value="">Cargando matrículas...</option>
-            </select>
           </div>
           <button type="submit" class="btn btn-primary-custom w-100 py-3 text-white fs-5" id="btnLoginSubmit">Acceder al Sistema</button>
         </form>
@@ -118,14 +112,14 @@
             <textarea class="form-control" id="taObservaciones" rows="2" placeholder="Observaciones o notas pendientes..."></textarea>
           </div>
 
-          <!-- MATERIALES UTILIZADOS (FILTRADOS POR EL STOCK REAL DE ESTA FURGONETA) -->
+          <!-- MATERIALES UTILIZADOS -->
           <div class="card card-custom p-3 mb-3 border-primary border-opacity-25">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <h6 class="fw-bold text-primary mb-0"><i class="bi bi-box-seam me-1"></i>Materiales Gastados</h6>
               <button type="button" class="btn btn-sm btn-primary rounded-pill" onclick="app.handlers.agregarFilaMaterial()"><i class="bi bi-plus-lg"></i> Añadir</button>
             </div>
             <div id="contenedorMaterialesUsados"></div>
-            <small class="text-muted fst-italic text-center d-block mt-2">Solo aparecen repuestos con existencias en tu vehículo seleccionado.</small>
+            <small class="text-muted fst-italic text-center d-block mt-2">Solo aparecen repuestos con existencias en tu vehículo asignado.</small>
           </div>
 
           <!-- FOTOS -->
@@ -274,7 +268,8 @@
   <script>
     const app = {
       config: {
-        apiUrl: "https://script.google.com/macros/s/AKfycbyU1Vy0Cfaeg8BShQMoLjxhovE0bWu5QTeH1hZCFafeScieIl3Gz_VwWLwa6YDtOBIs/exec",
+        // ACTUALIZA AQUÍ TU URL /exec DE IMPLEMENTACIÓN PÚBLICA
+        apiUrl: "https://script.google.com/macros/s/AKfycbyU1Vy0Cfaeg8BShQMoLjxhovE0bWU5QTe4K2t2J7eQW21k43j6B0rO7UqM42aW-K7E/exec",
         maxFileRawBytes: 12582912,
         maxFinalBytes: 819200,
         timeoutMs: 35000
@@ -388,19 +383,6 @@
       },
 
       handlers: {
-        onUserInputChange() {
-          const u = document.getElementById('inputUser').value.trim().toUpperCase();
-          const box = document.getElementById('boxSelectorFurgoLogin');
-          const sel = document.getElementById('selFurgoLogin');
-          if (u === 'ADMIN') {
-            box.style.display = 'none';
-            sel.required = false;
-          } else {
-            box.style.display = 'block';
-            sel.required = true;
-          }
-        },
-
         async onFotoSelected(input, tipo) {
           app.state.formDirty = true;
           const file = input.files[0];
@@ -514,28 +496,14 @@
       },
 
       actions: {
-        async precargarFurgosLogin() {
-          try {
-            const res = await app.api.req('obtenerFurgosDisponibles');
-            const sel = document.getElementById('selFurgoLogin');
-            sel.innerHTML = '<option value="">-- Seleccionar Furgoneta --</option>';
-            if (res.success && Array.isArray(res.furgos)) {
-              res.furgos.forEach(f => {
-                if (f !== 'CENTRAL') sel.innerHTML += `<option value="${f}">🚚 ${f}</option>`;
-              });
-            }
-          } catch (e) {}
-        },
-
         async handleLogin(e) {
           e.preventDefault();
           const u = document.getElementById('inputUser').value.trim();
           const p = document.getElementById('inputPass').value.trim();
-          const mat = document.getElementById('selFurgoLogin').value;
 
           app.ui.setLoader(true, 'Autenticando...');
           try {
-            const res = await app.api.req('login', { usuario: u, clave: p, matricula: mat });
+            const res = await app.api.req('login', { usuario: u, clave: p });
             if (res.success) {
               sessionStorage.setItem('T', res.token);
               sessionStorage.setItem('TE', res.tecnico);
@@ -766,7 +734,6 @@
     window.addEventListener('beforeunload', (e) => { if (app.state.formDirty) { e.preventDefault(); e.returnValue = ''; } });
 
     document.addEventListener('DOMContentLoaded', () => {
-      app.actions.precargarFurgosLogin();
       const t = sessionStorage.getItem('T'), te = sessionStorage.getItem('TE'), u = sessionStorage.getItem('US'), mat = sessionStorage.getItem('MAT'), adm = sessionStorage.getItem('ADM');
       if (t && te && u) {
         app.state.token = t; app.state.tecnico = te; app.state.usuario = u; app.state.matricula = mat || 'CENTRAL'; app.state.esAdmin = adm === '1';
