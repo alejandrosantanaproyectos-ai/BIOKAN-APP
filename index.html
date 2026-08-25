@@ -283,7 +283,7 @@
   <script>
     const app = {
       config: {
-        apiUrl: "https://script.google.com/macros/s/AKfycbwF71p3M-CpK6utdaSTIWMSo_SAXAtsEHWZplXo7R1hldLBQlUSyHihgChas_Fiu1Nn/exec",
+        apiUrl: "https://script.google.com/macros/s/AKfycbyvgrAP8oMKzZ43yOk4Fdm4PTdSxcdX0RAk0P-bD3eZDQ9G6hAyhS1qcpBeQTNhhKlK/exec",
         maxFileRawBytes: 12582912,
         maxFinalBytes: 819200,
         timeoutMs: 35000
@@ -419,7 +419,7 @@
         }
       },
 
-api: {
+      api: {
         async req(accion, payload = {}) {
           if (!navigator.onLine) {
             app.ui.showToast('Sin conexión.', 'danger');
@@ -433,6 +433,7 @@ api: {
           try {
             const res = await fetch(app.config.apiUrl, {
               method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
               body: body,
               redirect: 'follow',
               signal: ctrl.signal
