@@ -73,38 +73,33 @@
         <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="app.actions.handleLogout()"><i class="bi bi-box-arrow-right"></i> Salir</button>
       </div>
 
-      <!-- MÓDULO 1: MANTENIMIENTO (SÓLO TÉCNICOS) -->
+      <!-- MÓDULO 1: MANTENIMIENTO -->
       <div id="moduleMantenimiento" class="px-2 pb-5">
         <form id="formIntervencion" onsubmit="app.actions.handleGuardarMantenimiento(event)">
           <div class="card card-custom p-3 mb-3">
-            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-geo-alt me-1"></i>Ubicación y Equipo</h6>
+            <h6 class="fw-bold text-primary mb-3"><i class="bi bi-geo-alt me-1"></i>Equipo y Ubicación</h6>
             <input type="date" class="form-control mb-3" id="txtFecha" required>
             
-            <!-- BUSCADOR PREDICTIVO DE CLIENTES -->
+            <!-- BUSCADOR PREDICTIVO POR NÚMERO DE SERIE / ID EQUIPO -->
             <div class="mb-3">
-              <label class="form-label fw-bold small text-secondary">1. Empresa (Cliente) *</label>
+              <label class="form-label fw-bold small text-secondary">Nº de Serie / ID de Equipo *</label>
               <div class="input-group">
                 <span class="input-group-text bg-white text-primary"><i class="bi bi-search"></i></span>
-                <input class="form-control" list="dlEmpresas" id="inputEmpresaSearch" placeholder="Escribe para buscar cliente..." oninput="app.handlers.onEmpresaSearchInput()" autocomplete="off" required>
-                <datalist id="dlEmpresas"></datalist>
+                <input class="form-control fw-bold fs-5 text-uppercase" list="dlEquipos" id="inputEquipoSearch" placeholder="Escribe el nº de serie (ej: L001)..." oninput="app.handlers.onEquipoSearchInput()" autocomplete="off" required>
+                <datalist id="dlEquipos"></datalist>
               </div>
             </div>
 
-            <div class="mb-3">
-              <label class="form-label fw-bold small text-secondary">2. Sede / Local *</label>
-              <select class="form-select" id="selLocal" onchange="app.handlers.onLocalChange()" required disabled>
-                <option value="">-- Seleccionar Sede / Local --</option>
-              </select>
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small text-muted mb-1">Modelo de Equipo</label>
+                <input type="text" class="form-control bg-light" id="txtModeloEquipo" readonly placeholder="Modelo detectado">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted mb-1">Local / Ubicación Asignada</label>
+                <input type="text" class="form-control bg-light fw-bold text-primary" id="txtLocalEquipo" readonly placeholder="Local detectado">
+              </div>
             </div>
-
-            <div class="mb-3">
-              <label class="form-label fw-bold small text-secondary">3. Equipo / Nº Serie *</label>
-              <select class="form-select" id="selEquipo" onchange="app.handlers.onEquipoChange()" required disabled>
-                <option value="">-- Seleccionar Equipo --</option>
-              </select>
-            </div>
-
-            <input type="text" class="form-control bg-light" id="txtModeloEquipo" readonly placeholder="Modelo de equipo autocompletado">
           </div>
 
           <div class="card card-custom p-3 mb-3">
@@ -118,14 +113,16 @@
               <option value="Retirada">Retirada de Equipo</option>
             </select>
             <select class="form-select mb-3" id="selEstadoFinal" required>
-              <option value="">-- Estado en el que queda el equipo --</option>
+              <option value="">-- Estado final del equipo --</option>
               <option value="Operativo">Operativo (100% Funcional)</option>
               <option value="Operativo con restricciones">Operativo con restricciones</option>
               <option value="Fuera de servicio">Fuera de servicio</option>
               <option value="En espera de repuestos">A la espera de repuestos</option>
             </select>
-            <textarea class="form-control mb-3" id="taDescripcion" rows="3" required placeholder="Describe las tareas realizadas..."></textarea>
-            <textarea class="form-control" id="taObservaciones" rows="2" placeholder="Observaciones o notas pendientes..."></textarea>
+            <textarea class="form-control mb-3" id="taDescripcion" rows="3" required placeholder="Descripción del mantenimiento realizado..."></textarea>
+            
+            <label class="form-label fw-bold small text-secondary">Realizar en próxima visita</label>
+            <textarea class="form-control" id="taObservacionesProxima" rows="2" placeholder="Notas o acciones pendientes para la próxima visita..."></textarea>
           </div>
 
           <!-- MATERIALES UTILIZADOS -->
@@ -223,7 +220,7 @@
         </div>
       </div>
 
-      <!-- MÓDULO 3: FURGÓN / ALMACÉN (MULTI-MATERIAL TRASPASOS) -->
+      <!-- MÓDULO 3: FURGÓN / ALMACÉN -->
       <div id="moduleFurgon" class="d-none px-2 pb-5">
         <div class="card card-custom mb-3 border-primary">
           <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
@@ -264,7 +261,7 @@
         </div>
       </div>
 
-      <!-- BOTTOM BAR (ADAPTATIVA) -->
+      <!-- BOTTOM BAR -->
       <div class="bottom-nav d-none" id="bottomNav">
         <div class="nav-item-bottom active" id="nav-mantenimiento" onclick="app.ui.switchModule('mantenimiento')">
           <i class="bi bi-tools"></i>Partes
@@ -291,7 +288,7 @@
 
       state: {
         token: null, tecnico: null, usuario: null, matricula: 'CENTRAL', esAdmin: false,
-        dbRutas: {}, dbCatalogo: {}, catalogoMap: {}, stockFurgonRaw: {},
+        dbEquipos: {}, dbCatalogo: {}, catalogoMap: {}, stockFurgonRaw: {},
         idempotency: { mantenimiento: null, efectivo: null, furgon: null },
         fotos: { equipo: { base64: '' }, albaran: { base64: '' }, factura: { base64: '' } },
         formDirty: false
@@ -342,16 +339,18 @@
           }
         },
         popularSelectoresUI() {
-          // Llenar datalist de Empresas
-          const dl = document.getElementById('dlEmpresas');
+          // Llenar datalist predictivo de Nº de Serie / Equipos
+          const dl = document.getElementById('dlEquipos');
           dl.innerHTML = '';
-          Object.keys(app.state.dbRutas).sort().forEach(emp => {
+          Object.keys(app.state.dbEquipos).sort().forEach(idEq => {
+            const eq = app.state.dbEquipos[idEq];
             const opt = document.createElement('option');
-            opt.value = emp;
+            opt.value = idEq;
+            opt.label = `${eq.modelo} | ${eq.local || 'Sin local asignado'}`;
             dl.appendChild(opt);
           });
 
-          // Configurar Opciones de Traspaso según Rol
+          // Opciones de Traspaso según Rol
           const selTraspaso = document.getElementById('selTipoTraspaso');
           selTraspaso.innerHTML = '';
           if (app.state.esAdmin) {
@@ -425,11 +424,9 @@
             app.ui.showToast('Sin conexión.', 'danger');
             throw new Error('OFFLINE');
           }
-          
           const body = JSON.stringify({ accion, ...payload });
           const ctrl = new AbortController();
           const tid = setTimeout(() => ctrl.abort(), app.config.timeoutMs);
-          
           try {
             const res = await fetch(app.config.apiUrl, {
               method: 'POST',
@@ -438,13 +435,8 @@
               redirect: 'follow',
               signal: ctrl.signal
             });
-            
             clearTimeout(tid);
-            
-            if (!res.ok) {
-              throw new Error('HTTP ' + res.status);
-            }
-            
+            if (!res.ok) throw new Error('HTTP ' + res.status);
             return await res.json();
           } catch (e) {
             clearTimeout(tid);
@@ -478,49 +470,19 @@
           }
         },
 
-        onEmpresaSearchInput() {
+        onEquipoSearchInput() {
           app.state.formDirty = true;
-          const val = document.getElementById('inputEmpresaSearch').value.trim();
-          const sL = document.getElementById('selLocal');
-          const sE = document.getElementById('selEquipo');
-          document.getElementById('txtModeloEquipo').value = '';
+          const val = document.getElementById('inputEquipoSearch').value.trim().toUpperCase();
+          const txtMod = document.getElementById('txtModeloEquipo');
+          const txtLoc = document.getElementById('txtLocalEquipo');
 
-          app.ui.limpiarSelect(sL, '-- 2. Seleccionar Sede / Local --');
-          app.ui.limpiarSelect(sE, '-- 3. Seleccionar Equipo --');
-          sE.disabled = true;
-
-          // Si el texto coincide exactamente con una empresa de la BD, desbloquea las sedes
-          if (val && app.state.dbRutas[val]) {
-            Object.keys(app.state.dbRutas[val]).sort().forEach(l => {
-              sL.innerHTML += `<option value="${l}">${l}</option>`;
-            });
-            sL.disabled = false;
+          if (val && app.state.dbEquipos[val]) {
+            txtMod.value = app.state.dbEquipos[val].modelo || '-';
+            txtLoc.value = app.state.dbEquipos[val].local || 'Sin local asignado';
           } else {
-            sL.disabled = true;
+            txtMod.value = '';
+            txtLoc.value = '';
           }
-        },
-
-        onLocalChange() {
-          const emp = document.getElementById('inputEmpresaSearch').value.trim();
-          const loc = document.getElementById('selLocal').value;
-          const sE = document.getElementById('selEquipo');
-          document.getElementById('txtModeloEquipo').value = '';
-
-          app.ui.limpiarSelect(sE, '-- 3. Seleccionar Equipo --');
-
-          if (loc && app.state.dbRutas[emp] && app.state.dbRutas[emp][loc]) {
-            app.state.dbRutas[emp][loc].forEach(eq => {
-              sE.innerHTML += `<option value="${eq.idEquipo}" data-mod="${eq.modelo}">${eq.idEquipo} (${eq.modelo})</option>`;
-            });
-            sE.disabled = false;
-          } else {
-            sE.disabled = true;
-          }
-        },
-
-        onEquipoChange() {
-          const opt = document.getElementById('selEquipo').selectedOptions[0];
-          document.getElementById('txtModeloEquipo').value = opt ? opt.getAttribute('data-mod') : '';
         },
 
         agregarFilaMaterial(containerId, filtrarSoloStockPropio = false) {
@@ -648,7 +610,7 @@
               return;
             }
             if (res.success) {
-              app.state.dbRutas = res.rutas || {};
+              app.state.dbEquipos = res.equipos || {};
               app.state.dbCatalogo = res.catalogo || {};
               app.state.catalogoMap = res.catalogoMap || {};
               app.state.stockFurgonRaw = res.stockFurgon || {};
@@ -684,11 +646,13 @@
 
         async handleGuardarMantenimiento(e) {
           e.preventDefault();
-          const emp = document.getElementById('inputEmpresaSearch').value.trim();
-          if (!app.state.dbRutas[emp]) {
-            app.ui.showToast('Seleccione un cliente válido de la lista.', 'warning');
+          const idEq = document.getElementById('inputEquipoSearch').value.trim().toUpperCase();
+          if (!idEq) {
+            app.ui.showToast('Introduzca el Nº de Serie del equipo.', 'warning');
             return;
           }
+
+          const localDetectado = document.getElementById('txtLocalEquipo').value;
 
           const btns = document.querySelectorAll('.submit-btn');
           btns.forEach(b => b.disabled = true);
@@ -707,13 +671,12 @@
               payload: {
                 idempotencyKey: app.state.idempotency.mantenimiento,
                 fechaMantenimiento: document.getElementById('txtFecha').value,
-                empresa: emp,
-                local: document.getElementById('selLocal').value,
-                idEquipo: document.getElementById('selEquipo').value,
+                idEquipo: idEq,
+                local: localDetectado,
                 tipoMantenimiento: document.getElementById('selTipoMant').value,
                 estadoFinal: document.getElementById('selEstadoFinal').value,
                 descripcion: document.getElementById('taDescripcion').value,
-                observaciones: document.getElementById('taObservaciones').value,
+                observacionesProximaVisita: document.getElementById('taObservacionesProxima').value,
                 fotoEquipoBase64: app.state.fotos.equipo.base64,
                 fotoAlbaranBase64: app.state.fotos.albaran.base64,
                 materialesUsados: mat
@@ -721,12 +684,12 @@
             });
 
             if (res.success) {
-              app.ui.showToast('✅ Parte registrado', 'success');
+              app.ui.showToast('✅ Parte registrado con éxito', 'success');
               document.getElementById('formIntervencion').reset();
               document.getElementById('txtFecha').valueAsDate = new Date();
+              document.getElementById('txtModeloEquipo').value = '';
+              document.getElementById('txtLocalEquipo').value = '';
               document.getElementById('contenedorMaterialesUsados').innerHTML = '';
-              document.getElementById('selLocal').disabled = true;
-              document.getElementById('selEquipo').disabled = true;
               app.state.fotos.equipo.base64 = ''; app.state.fotos.albaran.base64 = '';
               document.getElementById('imgPreviewEquipo').classList.add('d-none');
               document.getElementById('imgPreviewAlbaran').classList.add('d-none');
