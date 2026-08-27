@@ -219,7 +219,7 @@
         </div>
       </div>
 
-      <!-- MÓDULO 3: GESTIÓN LIBRE DE ALMACÉN / TRASPASOS -->
+      <!-- MÓDULO 3: GESTIÓN DE TRASPASOS CON MODO RECEPCIÓN / ENTREGA -->
       <div id="moduleFurgon" class="d-none px-2 pb-5">
         <div class="card card-custom mb-3 border-primary">
           <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
@@ -239,6 +239,15 @@
           <h6 class="fw-bold text-dark mb-3"><i class="bi bi-arrow-left-right me-1"></i>Traspaso entre Almacenes</h6>
           <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)">
             
+            <!-- SELECTOR DE OPERACIÓN (RECEPCIÓN O ENTREGA) -->
+            <div class="mb-3">
+              <label class="form-label fw-bold small text-secondary">Tipo de Operación *</label>
+              <select class="form-select form-select-lg fw-bold text-primary" id="selModoOperacion" onchange="app.handlers.onModoOperacionChange()" required>
+                <option value="RECEPCION">📥 RECEPCIÓN (Entrada hacia mi vehículo/almacén)</option>
+                <option value="ENTREGA">📤 ENTREGA (Salida desde mi vehículo/almacén)</option>
+              </select>
+            </div>
+
             <div class="row g-2 mb-3">
               <div class="col-6">
                 <label class="form-label fw-bold small text-secondary">Almacén Origen *</label>
@@ -356,29 +365,8 @@
             dl.appendChild(opt);
           });
 
-          // Llenar desplegables de Almacén Origen y Destino
-          const sOri = document.getElementById('selAlmacenOrigen');
-          const sDes = document.getElementById('selAlmacenDestino');
-          sOri.innerHTML = '';
-          sDes.innerHTML = '';
-
-          const lista = app.state.dbAlmacenes && app.state.dbAlmacenes.length > 0
-            ? app.state.dbAlmacenes
-            : ['PROVEEDOR', 'CENTRAL', 'OFICINA'];
-
-          lista.forEach(alm => {
-            sOri.innerHTML += `<option value="${alm}">${alm}</option>`;
-            sDes.innerHTML += `<option value="${alm}">${alm}</option>`;
-          });
-
-          // Preselecciones inteligentes por rol
-          if (app.state.esAdmin) {
-            sOri.value = 'PROVEEDOR';
-            sDes.value = 'CENTRAL';
-          } else {
-            sOri.value = 'CENTRAL';
-            sDes.value = app.state.matricula;
-          }
+          // Inicializar selectores de Almacén y aplicar bloqueo inicial
+          app.handlers.onModoOperacionChange();
         },
         adaptarInterfazPorRol() {
           const navMant = document.getElementById('nav-mantenimiento');
@@ -461,6 +449,51 @@
       },
 
       handlers: {
+        onModoOperacionChange() {
+          const modo = document.getElementById('selModoOperacion').value;
+          const sOri = document.getElementById('selAlmacenOrigen');
+          const sDes = document.getElementById('selAlmacenDestino');
+          const miAlmacen = app.state.matricula || 'CENTRAL';
+
+          const lista = app.state.dbAlmacenes && app.state.dbAlmacenes.length > 0
+            ? app.state.dbAlmacenes
+            : ['PROVEEDOR', 'CENTRAL', 'OFICINA'];
+
+          sOri.innerHTML = '';
+          sDes.innerHTML = '';
+
+          lista.forEach(alm => {
+            sOri.innerHTML += `<option value="${alm}">${alm}</option>`;
+            sDes.innerHTML += `<option value="${alm}">${alm}</option>`;
+          });
+
+          if (modo === 'RECEPCION') {
+            // Destino bloqueado con mi almacén / furgoneta
+            sDes.value = miAlmacen;
+            sDes.classList.add('bg-light');
+            sDes.style.pointerEvents = 'none';
+            sDes.tabIndex = -1;
+
+            // Origen libre (preselecciona CENTRAL si mi almacén no es CENTRAL)
+            sOri.classList.remove('bg-light');
+            sOri.style.pointerEvents = 'auto';
+            sOri.tabIndex = 0;
+            sOri.value = (miAlmacen === 'CENTRAL') ? 'PROVEEDOR' : 'CENTRAL';
+          } else {
+            // Entrega: Origen bloqueado con mi almacén / furgoneta
+            sOri.value = miAlmacen;
+            sOri.classList.add('bg-light');
+            sOri.style.pointerEvents = 'none';
+            sOri.tabIndex = -1;
+
+            // Destino libre (preselecciona CENTRAL si mi almacén no es CENTRAL)
+            sDes.classList.remove('bg-light');
+            sDes.style.pointerEvents = 'auto';
+            sDes.tabIndex = 0;
+            sDes.value = (miAlmacen === 'CENTRAL') ? 'OFICINA' : 'CENTRAL';
+          }
+        },
+
         async onFotoSelected(input, tipo) {
           app.state.formDirty = true;
           const file = input.files[0];
