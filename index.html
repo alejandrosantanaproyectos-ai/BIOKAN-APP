@@ -80,7 +80,6 @@
             <h6 class="fw-bold text-primary mb-3"><i class="bi bi-geo-alt me-1"></i>Equipo y Ubicación</h6>
             <input type="date" class="form-control mb-3" id="txtFecha" required>
             
-            <!-- BUSCADOR PREDICTIVO POR NÚMERO DE SERIE / ID EQUIPO -->
             <div class="mb-3">
               <label class="form-label fw-bold small text-secondary">Nº de Serie / ID de Equipo *</label>
               <div class="input-group">
@@ -220,7 +219,7 @@
         </div>
       </div>
 
-      <!-- MÓDULO 3: FURGÓN / ALMACÉN -->
+      <!-- MÓDULO 3: GESTIÓN LIBRE DE ALMACÉN / TRASPASOS -->
       <div id="moduleFurgon" class="d-none px-2 pb-5">
         <div class="card card-custom mb-3 border-primary">
           <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
@@ -237,11 +236,18 @@
         </div>
 
         <div class="card card-custom p-3 mb-4 bg-light border">
-          <h6 class="fw-bold text-dark mb-3"><i class="bi bi-arrow-left-right me-1"></i>Movimiento de Almacén</h6>
+          <h6 class="fw-bold text-dark mb-3"><i class="bi bi-arrow-left-right me-1"></i>Traspaso entre Almacenes</h6>
           <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)">
-            <div class="mb-3">
-              <label class="form-label fw-bold small text-secondary">Tipo de Movimiento *</label>
-              <select class="form-select" id="selTipoTraspaso" required></select>
+            
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-bold small text-secondary">Almacén Origen *</label>
+                <select class="form-select" id="selAlmacenOrigen" required></select>
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-bold small text-secondary">Almacén Destino *</label>
+                <select class="form-select" id="selAlmacenDestino" required></select>
+              </div>
             </div>
 
             <div class="mb-3">
@@ -256,7 +262,7 @@
               <input type="text" class="form-control" id="txtObsFurgon" placeholder="Nº Albarán / Factura u observaciones...">
             </div>
 
-            <button type="submit" class="btn btn-dark w-100 py-3 submit-btn fs-5" id="btnGuardarFurgon">Confirmar Movimiento</button>
+            <button type="submit" class="btn btn-dark w-100 py-3 submit-btn fs-5" id="btnGuardarFurgon">Confirmar Traspaso</button>
           </form>
         </div>
       </div>
@@ -288,7 +294,7 @@
 
       state: {
         token: null, tecnico: null, usuario: null, matricula: 'CENTRAL', esAdmin: false,
-        dbEquipos: {}, dbCatalogo: {}, catalogoMap: {}, stockFurgonRaw: {},
+        dbEquipos: {}, dbAlmacenes: [], dbCatalogo: {}, catalogoMap: {}, stockFurgonRaw: {},
         idempotency: { mantenimiento: null, efectivo: null, furgon: null },
         fotos: { equipo: { base64: '' }, albaran: { base64: '' }, factura: { base64: '' } },
         formDirty: false
@@ -339,7 +345,7 @@
           }
         },
         popularSelectoresUI() {
-          // Llenar datalist predictivo de Nº de Serie / Equipos
+          // Llenar datalist de Equipos
           const dl = document.getElementById('dlEquipos');
           dl.innerHTML = '';
           Object.keys(app.state.dbEquipos).sort().forEach(idEq => {
@@ -350,19 +356,28 @@
             dl.appendChild(opt);
           });
 
-          // Opciones de Traspaso según Rol
-          const selTraspaso = document.getElementById('selTipoTraspaso');
-          selTraspaso.innerHTML = '';
+          // Llenar desplegables de Almacén Origen y Destino
+          const sOri = document.getElementById('selAlmacenOrigen');
+          const sDes = document.getElementById('selAlmacenDestino');
+          sOri.innerHTML = '';
+          sDes.innerHTML = '';
+
+          const lista = app.state.dbAlmacenes && app.state.dbAlmacenes.length > 0
+            ? app.state.dbAlmacenes
+            : ['PROVEEDOR', 'CENTRAL', 'OFICINA'];
+
+          lista.forEach(alm => {
+            sOri.innerHTML += `<option value="${alm}">${alm}</option>`;
+            sDes.innerHTML += `<option value="${alm}">${alm}</option>`;
+          });
+
+          // Preselecciones inteligentes por rol
           if (app.state.esAdmin) {
-            selTraspaso.innerHTML = `
-              <option value="CARGA">📥 ENTRADA: Proveedor ➔ Central (Compra)</option>
-              <option value="DESCARGA">📤 SALIDA: Central ➔ Proveedor (Devolución)</option>
-            `;
+            sOri.value = 'PROVEEDOR';
+            sDes.value = 'CENTRAL';
           } else {
-            selTraspaso.innerHTML = `
-              <option value="CARGA">📥 CARGAR: Central ➔ Mi Vehículo</option>
-              <option value="DESCARGA">📤 DEVOLVER: Mi Vehículo ➔ Central</option>
-            `;
+            sOri.value = 'CENTRAL';
+            sDes.value = app.state.matricula;
           }
         },
         adaptarInterfazPorRol() {
@@ -611,6 +626,7 @@
             }
             if (res.success) {
               app.state.dbEquipos = res.equipos || {};
+              app.state.dbAlmacenes = res.almacenes || [];
               app.state.dbCatalogo = res.catalogo || {};
               app.state.catalogoMap = res.catalogoMap || {};
               app.state.stockFurgonRaw = res.stockFurgon || {};
@@ -757,8 +773,13 @@
 
         async handleGuardarTraspasoFurgon(e) {
           e.preventDefault();
-          const btns = document.querySelectorAll('.submit-btn');
-          btns.forEach(b => b.disabled = true);
+          const origen = document.getElementById('selAlmacenOrigen').value;
+          const destino = document.getElementById('selAlmacenDestino').value;
+
+          if (origen === destino) {
+            app.ui.showToast('El almacén de origen y destino no pueden ser iguales.', 'warning');
+            return;
+          }
 
           const matList = [];
           document.querySelectorAll('#contenedorMaterialesTraspaso .mat-row').forEach(r => {
@@ -769,11 +790,12 @@
 
           if (matList.length === 0) {
             app.ui.showToast('Añada al menos un material con cantidad.', 'warning');
-            btns.forEach(b => b.disabled = false);
             return;
           }
 
-          app.ui.setLoader(true, 'Guardando movimiento de almacén...');
+          const btns = document.querySelectorAll('.submit-btn');
+          btns.forEach(b => b.disabled = true);
+          app.ui.setLoader(true, 'Guardando traspaso...');
           if (!app.state.idempotency.furgon) app.utils.generarIdem('furgon');
 
           try {
@@ -781,14 +803,15 @@
               token: app.state.token,
               payload: {
                 idempotencyKey: app.state.idempotency.furgon,
-                tipoTraspaso: document.getElementById('selTipoTraspaso').value,
+                origen: origen,
+                destino: destino,
                 materiales: matList,
                 observaciones: document.getElementById('txtObsFurgon').value
               }
             });
 
             if (res.success) {
-              app.ui.showToast('✅ Movimiento de almacén registrado', 'success');
+              app.ui.showToast('✅ Traspaso registrado con éxito', 'success');
               document.getElementById('formFurgon').reset();
               document.getElementById('contenedorMaterialesTraspaso').innerHTML = '';
               app.state.idempotency.furgon = null;
@@ -797,7 +820,7 @@
               app.ui.showToast(res.error || 'Error al registrar', 'danger');
             }
           } catch (e) {
-            app.ui.showToast('Error de red', 'danger');
+            app.ui.showToast('Error de red al registrar', 'danger');
           } finally {
             btns.forEach(b => b.disabled = false);
             app.ui.setLoader(false);
