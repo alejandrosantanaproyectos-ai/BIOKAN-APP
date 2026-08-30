@@ -727,7 +727,7 @@
           location.reload();
         },
 
-        async boot() {
+async boot() {
           if (!app.state.token) {
               app.state.token = sessionStorage.getItem('T');
               if(!app.state.token) return;
@@ -741,10 +741,10 @@
               return;
             }
             if (res.success) {
-              app.state.tecnico = res.tecnico;
-              app.state.usuario = res.usuario;
-              app.state.matricula = res.matricula;
-              app.state.esAdmin = res.esAdmin;
+              app.state.tecnico = res.tecnico || sessionStorage.getItem('TE');
+              app.state.usuario = res.usuario || sessionStorage.getItem('US');
+              app.state.matricula = res.matricula || res.matriculaAsignada || sessionStorage.getItem('MAT') || 'CENTRAL';
+              app.state.esAdmin = Boolean(res.esAdmin);
 
               document.getElementById('labelTecnicoSesion').textContent = app.state.tecnico;
               document.getElementById('labelUserCode').textContent = app.state.usuario;
