@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- Securing Headers: Strict CSP -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://script.google.com https://*.googleusercontent.com; img-src 'self' data: blob: https:; connect-src 'self' https://cdn.jsdelivr.net https://script.google.com https://*.googleusercontent.com;">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <title>Biokan - Field Operations</title>
   
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
@@ -140,8 +142,8 @@
             <div class="row g-3">
               <div class="col-6">
                 <label class="small fw-bold mb-1">Foto Equipo</label>
-                <input type="file" class="d-none" id="fileCamEquipo" accept="image/*" capture="environment" onchange="app.handlers.onFotoSelected(this, 'equipo')">
-                <input type="file" class="d-none" id="fileGalEquipo" accept="image/*" onchange="app.handlers.onFotoSelected(this, 'equipo')">
+                <input type="file" class="d-none" id="fileCamEquipo" accept="image/jpeg, image/png, image/webp" capture="environment" onchange="app.handlers.onFotoSelected(this, 'equipo')">
+                <input type="file" class="d-none" id="fileGalEquipo" accept="image/jpeg, image/png, image/webp" onchange="app.handlers.onFotoSelected(this, 'equipo')">
                 <div class="d-flex gap-1 mb-2">
                   <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileCamEquipo').click()"><i class="bi bi-camera"></i></button>
                   <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileGalEquipo').click()"><i class="bi bi-image"></i></button>
@@ -155,8 +157,8 @@
               
               <div class="col-6">
                 <label class="small fw-bold mb-1">Foto Albarán</label>
-                <input type="file" class="d-none" id="fileCamAlbaran" accept="image/*" capture="environment" onchange="app.handlers.onFotoSelected(this, 'albaran')">
-                <input type="file" class="d-none" id="fileGalAlbaran" accept="image/*" onchange="app.handlers.onFotoSelected(this, 'albaran')">
+                <input type="file" class="d-none" id="fileCamAlbaran" accept="image/jpeg, image/png, image/webp" capture="environment" onchange="app.handlers.onFotoSelected(this, 'albaran')">
+                <input type="file" class="d-none" id="fileGalAlbaran" accept="image/jpeg, image/png, image/webp" onchange="app.handlers.onFotoSelected(this, 'albaran')">
                 <div class="d-flex gap-1 mb-2">
                   <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileCamAlbaran').click()"><i class="bi bi-camera"></i></button>
                   <button type="button" class="btn btn-sm btn-outline-dark flex-fill py-2" onclick="document.getElementById('fileGalAlbaran').click()"><i class="bi bi-image"></i></button>
@@ -193,15 +195,15 @@
             </select>
             <div class="input-group mb-3">
               <span class="input-group-text fw-bold text-success bg-light">€</span>
-              <input type="number" step="0.01" class="form-control form-control-lg fw-bold" id="txtImporteEfectivo" placeholder="0.00" required>
+              <input type="number" step="0.01" min="0.01" max="10000" class="form-control form-control-lg fw-bold" id="txtImporteEfectivo" placeholder="0.00" required>
             </div>
-            <input type="text" class="form-control mb-3" id="txtProveedorEfectivo" placeholder="Proveedor / Entidad" required>
-            <input type="text" class="form-control mb-3" id="txtConceptoEfectivo" placeholder="Concepto del ticket" required>
-            <textarea class="form-control mb-3" id="taComentariosEfectivo" rows="2" placeholder="Observaciones (opcional)"></textarea>
+            <input type="text" class="form-control mb-3" id="txtProveedorEfectivo" placeholder="Proveedor / Entidad" maxlength="150" required>
+            <input type="text" class="form-control mb-3" id="txtConceptoEfectivo" placeholder="Concepto del ticket" maxlength="200" required>
+            <textarea class="form-control mb-3" id="taComentariosEfectivo" rows="2" placeholder="Observaciones (opcional)" maxlength="300"></textarea>
 
             <label class="small fw-bold mb-2 d-block">Foto del Ticket / Factura</label>
-            <input type="file" class="d-none" id="fileCamFactura" accept="image/*" capture="environment" onchange="app.handlers.onFotoSelected(this, 'factura')">
-            <input type="file" class="d-none" id="fileGalFactura" accept="image/*" onchange="app.handlers.onFotoSelected(this, 'factura')">
+            <input type="file" class="d-none" id="fileCamFactura" accept="image/jpeg, image/png, image/webp" capture="environment" onchange="app.handlers.onFotoSelected(this, 'factura')">
+            <input type="file" class="d-none" id="fileGalFactura" accept="image/jpeg, image/png, image/webp" onchange="app.handlers.onFotoSelected(this, 'factura')">
             <div class="d-flex gap-2 mb-2">
               <button type="button" class="btn btn-outline-dark flex-fill" onclick="document.getElementById('fileCamFactura').click()"><i class="bi bi-camera"></i> Cámara</button>
               <button type="button" class="btn btn-outline-dark flex-fill" onclick="document.getElementById('fileGalFactura').click()"><i class="bi bi-image"></i> Galería</button>
@@ -239,7 +241,6 @@
           <h6 class="fw-bold text-dark mb-3"><i class="bi bi-arrow-left-right me-1"></i>Traspaso entre Almacenes</h6>
           <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)">
             
-            <!-- SELECTOR DE OPERACIÓN (RECEPCIÓN O ENTREGA) -->
             <div class="mb-3">
               <label class="form-label fw-bold small text-secondary">Tipo de Operación *</label>
               <select class="form-select form-select-lg fw-bold text-primary" id="selModoOperacion" onchange="app.handlers.onModoOperacionChange()" required>
@@ -268,7 +269,7 @@
             </div>
 
             <div class="mb-3">
-              <input type="text" class="form-control" id="txtObsFurgon" placeholder="Nº Albarán / Factura u observaciones...">
+              <input type="text" class="form-control" id="txtObsFurgon" placeholder="Nº Albarán / Factura u observaciones..." maxlength="250">
             </div>
 
             <button type="submit" class="btn btn-dark w-100 py-3 submit-btn fs-5" id="btnGuardarFurgon">Confirmar Traspaso</button>
@@ -295,10 +296,10 @@
   <script>
     const app = {
       config: {
-        apiUrl: "https://script.google.com/macros/s/AKfycbyvgrAP8oMKzZ43yOk4Fdm4PTdSxcdX0RAk0P-bD3eZDQ9G6hAyhS1qcpBeQTNhhKlK/exec",
-        maxFileRawBytes: 12582912,
-        maxFinalBytes: 819200,
-        timeoutMs: 35000
+        // REPLACE WITH YOUR APPS SCRIPT SECURE URL
+        apiUrl: "https://script.google.com/macros/s/AKfycbyvgrAP8oMKzZ43yOk4Fdm4PTdSxcdX0RAk0P-bD3eZDQ9G6hAyhS1qcpBeQTNhhKlK/exec", 
+        timeoutMs: 35000,
+        maxImageSize: 819200
       },
 
       state: {
@@ -318,12 +319,31 @@
           const tC = document.getElementById('toastContainer');
           const toast = document.createElement('div');
           toast.className = `toast align-items-center text-bg-${type} border-0 show mb-2 shadow`;
-          toast.innerHTML = `<div class="d-flex"><div class="toast-body fw-bold">${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.parentElement.parentElement.remove()"></button></div>`;
+          // Prevent XSS in toasts
+          const innerWrapper = document.createElement('div');
+          innerWrapper.className = 'd-flex';
+          const tBody = document.createElement('div');
+          tBody.className = 'toast-body fw-bold';
+          tBody.textContent = msg; 
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn-close btn-close-white me-2 m-auto';
+          btn.onclick = function() { toast.remove(); };
+          
+          innerWrapper.appendChild(tBody);
+          innerWrapper.appendChild(btn);
+          toast.appendChild(innerWrapper);
+          
           tC.appendChild(toast);
           setTimeout(() => toast.remove(), 3500);
         },
         limpiarSelect(el, text) {
-          el.innerHTML = `<option value="">${text}</option>`;
+           // Safe replacement for innerHTML
+           el.replaceChildren();
+           const opt = document.createElement('option');
+           opt.value = "";
+           opt.textContent = text;
+           el.appendChild(opt);
         },
         switchModule(modulo) {
           ['mantenimiento', 'efectivo', 'furgon'].forEach(m => {
@@ -342,21 +362,48 @@
         },
         renderStockFurgonView(stockObj) {
           const tb = document.getElementById('tbodyStockFurgon');
-          tb.innerHTML = '';
+          tb.replaceChildren(); // Safe DOM clear
+          
           const keys = Object.keys(stockObj || {});
           if (keys.length === 0) {
-            tb.innerHTML = '<tr><td class="text-center text-muted py-3">Sin existencias registradas</td></tr>';
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.className = 'text-center text-muted py-3';
+            td.textContent = 'Sin existencias registradas';
+            tr.appendChild(td);
+            tb.appendChild(tr);
           } else {
             keys.sort().forEach(id => {
               const m = app.state.catalogoMap[id] || { nom: id, cat: 'Varios', uni: 'UD' };
-              tb.innerHTML += `<tr><td><div class="fw-bold">${m.nom}</div><small class="text-muted">${m.cat} | Cód: ${id}</small></td><td class="text-end align-middle"><span class="badge bg-primary fs-6">${stockObj[id]} ${m.uni}</span></td></tr>`;
+              
+              const tr = document.createElement('tr');
+              
+              const tdInfo = document.createElement('td');
+              const divNom = document.createElement('div');
+              divNom.className = 'fw-bold';
+              divNom.textContent = m.nom;
+              const smallCat = document.createElement('small');
+              smallCat.className = 'text-muted';
+              smallCat.textContent = `${m.cat} | Cód: ${id}`;
+              tdInfo.appendChild(divNom);
+              tdInfo.appendChild(smallCat);
+              
+              const tdBadge = document.createElement('td');
+              tdBadge.className = 'text-end align-middle';
+              const span = document.createElement('span');
+              span.className = 'badge bg-primary fs-6';
+              span.textContent = `${stockObj[id]} ${m.uni}`;
+              tdBadge.appendChild(span);
+              
+              tr.appendChild(tdInfo);
+              tr.appendChild(tdBadge);
+              tb.appendChild(tr);
             });
           }
         },
         popularSelectoresUI() {
-          // Llenar datalist de Equipos
           const dl = document.getElementById('dlEquipos');
-          dl.innerHTML = '';
+          dl.replaceChildren();
           Object.keys(app.state.dbEquipos).sort().forEach(idEq => {
             const eq = app.state.dbEquipos[idEq];
             const opt = document.createElement('option');
@@ -365,7 +412,6 @@
             dl.appendChild(opt);
           });
 
-          // Inicializar selectores de Almacén y aplicar bloqueo inicial
           app.handlers.onModoOperacionChange();
         },
         adaptarInterfazPorRol() {
@@ -396,7 +442,7 @@
       utils: {
         async compress(file) {
           const bmp = await createImageBitmap(file);
-          let w = bmp.width, h = bmp.height, max = 1600, q = 0.78;
+          let w = bmp.width, h = bmp.height, max = 1600, q = 0.80; // slightly better quality start
           if (w > max || h > max) {
             if (w > h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; }
           }
@@ -405,12 +451,19 @@
           const ctx = canvas.getContext('2d', { alpha: false });
           ctx.drawImage(bmp, 0, 0, w, h);
           let blob;
-          for (let i = 0; i < 4; i++) {
+          for (let i = 0; i < 5; i++) {
             blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', q));
-            if (blob.size <= app.config.maxFinalBytes) break;
-            q -= 0.15; canvas.width *= 0.85; canvas.height *= 0.85; ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+            if (blob.size <= app.config.maxImageSize) break;
+            q -= 0.15; 
+            canvas.width *= 0.85; 
+            canvas.height *= 0.85; 
+            ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
           }
           bmp.close();
+          if (blob.size > app.config.maxImageSize) {
+              throw new Error("Imagen demasiado compleja para reducir.");
+          }
+          
           const b64 = await new Promise(r => { const rd = new FileReader(); rd.onloadend = () => r(rd.result); rd.readAsDataURL(blob); });
           return { base64: b64, sizeMsg: `${Math.round(file.size / 1024)}KB ➔ ${Math.round(blob.size / 1024)}KB` };
         },
@@ -433,14 +486,18 @@
           try {
             const res = await fetch(app.config.apiUrl, {
               method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
               body: body,
-              redirect: 'follow',
+              redirect: 'follow', // Crucial to avoid CORS 200 ERR_FAILED on redirect
               signal: ctrl.signal
             });
             clearTimeout(tid);
             if (!res.ok) throw new Error('HTTP ' + res.status);
-            return await res.json();
+            
+            const data = await res.json();
+            if(data.sessionExpired) {
+               app.actions.handleLogout(); // Force logout if server says token died
+            }
+            return data;
           } catch (e) {
             clearTimeout(tid);
             throw e;
@@ -459,34 +516,32 @@
             ? app.state.dbAlmacenes
             : ['PROVEEDOR', 'CENTRAL', 'OFICINA'];
 
-          sOri.innerHTML = '';
-          sDes.innerHTML = '';
+          sOri.replaceChildren();
+          sDes.replaceChildren();
 
           lista.forEach(alm => {
-            sOri.innerHTML += `<option value="${alm}">${alm}</option>`;
-            sDes.innerHTML += `<option value="${alm}">${alm}</option>`;
+            const optO = document.createElement('option'); optO.value = alm; optO.textContent = alm;
+            const optD = document.createElement('option'); optD.value = alm; optD.textContent = alm;
+            sOri.appendChild(optO);
+            sDes.appendChild(optD);
           });
 
           if (modo === 'RECEPCION') {
-            // Destino bloqueado con mi almacén / furgoneta
             sDes.value = miAlmacen;
             sDes.classList.add('bg-light');
             sDes.style.pointerEvents = 'none';
             sDes.tabIndex = -1;
 
-            // Origen libre (preselecciona CENTRAL si mi almacén no es CENTRAL)
             sOri.classList.remove('bg-light');
             sOri.style.pointerEvents = 'auto';
             sOri.tabIndex = 0;
             sOri.value = (miAlmacen === 'CENTRAL') ? 'PROVEEDOR' : 'CENTRAL';
           } else {
-            // Entrega: Origen bloqueado con mi almacén / furgoneta
             sOri.value = miAlmacen;
             sOri.classList.add('bg-light');
             sOri.style.pointerEvents = 'none';
             sOri.tabIndex = -1;
 
-            // Destino libre (preselecciona CENTRAL si mi almacén no es CENTRAL)
             sDes.classList.remove('bg-light');
             sDes.style.pointerEvents = 'auto';
             sDes.tabIndex = 0;
@@ -503,6 +558,13 @@
             document.getElementById('lblPlaceholder' + cap).classList.remove('d-none');
             return;
           }
+          
+          if (!file.type.startsWith('image/')) {
+              app.ui.showToast('Solo se permiten imágenes.', 'danger');
+              input.value = '';
+              return;
+          }
+          
           app.ui.setLoader(true, 'Comprimiendo...');
           try {
             const res = await app.utils.compress(file);
@@ -512,7 +574,8 @@
             document.getElementById('lblPlaceholder' + cap).classList.add('d-none');
             document.getElementById('meta' + cap).textContent = `✔ (${res.sizeMsg})`;
           } catch (e) {
-            app.ui.showToast('Error en foto', 'danger');
+            app.ui.showToast('Error procesando foto', 'danger');
+            input.value = '';
           } finally {
             app.ui.setLoader(false);
           }
@@ -536,37 +599,66 @@
         agregarFilaMaterial(containerId, filtrarSoloStockPropio = false) {
           app.state.formDirty = true;
           const contenedor = document.getElementById(containerId);
+          if (contenedor.children.length >= 30) {
+              app.ui.showToast('Máximo de líneas alcanzado.', 'warning');
+              return;
+          }
+          
           const div = document.createElement('div');
           div.className = 'mat-row';
           const rId = 'r_' + Date.now();
           div.id = rId;
 
-          let catsHtml = '<option value="">-- Categoría --</option>';
+          // Build selects safely
+          const rowG2 = document.createElement('div'); rowG2.className = 'row g-2 mb-2';
+          const col1 = document.createElement('div'); col1.className = 'col-12';
+          const col2 = document.createElement('div'); col2.className = 'col-12';
+          
+          const selCat = document.createElement('select'); selCat.className = 'form-select sel-cat';
+          selCat.onchange = function() { app.handlers.llenarMatRow(this, filtrarSoloStockPropio); };
+          const defCat = document.createElement('option'); defCat.value = ""; defCat.textContent = "-- Categoría --";
+          selCat.appendChild(defCat);
+          
+          const selMat = document.createElement('select'); selMat.className = 'form-select sel-mat'; selMat.disabled = true;
+          const defMat = document.createElement('option'); defMat.value = ""; defMat.textContent = "-- Material --";
+          selMat.appendChild(defMat);
 
+          const catsDisponibles = new Set();
           if (filtrarSoloStockPropio) {
-            const catsDisponibles = new Set();
             Object.keys(app.state.stockFurgonRaw || {}).forEach(id => {
               if (app.state.catalogoMap[id]) catsDisponibles.add(app.state.catalogoMap[id].cat);
             });
             if (catsDisponibles.size === 0) {
-              app.ui.showToast('No hay existencias disponibles para asignar.', 'warning');
+              app.ui.showToast('No hay existencias en el vehículo.', 'warning');
               return;
             }
-            Array.from(catsDisponibles).sort().forEach(c => catsHtml += `<option value="${c}">${c}</option>`);
           } else {
-            Object.keys(app.state.dbCatalogo).sort().forEach(c => catsHtml += `<option value="${c}">${c}</option>`);
+            Object.keys(app.state.dbCatalogo).forEach(c => catsDisponibles.add(c));
           }
 
-          div.innerHTML = `
-            <div class="row g-2 mb-2">
-              <div class="col-12"><select class="form-select sel-cat" onchange="app.handlers.llenarMatRow(this, ${filtrarSoloStockPropio})">${catsHtml}</select></div>
-              <div class="col-12"><select class="form-select sel-mat" disabled><option value="">-- Material --</option></select></div>
-            </div>
-            <div class="d-flex gap-2">
-              <input type="number" class="form-control txt-qty" placeholder="Cantidad" min="1">
-              <button type="button" class="btn btn-outline-danger" onclick="document.getElementById('${rId}').remove()"><i class="bi bi-trash"></i></button>
-            </div>
-          `;
+          Array.from(catsDisponibles).sort().forEach(c => {
+             const opt = document.createElement('option'); opt.value = c; opt.textContent = c;
+             selCat.appendChild(opt);
+          });
+          
+          col1.appendChild(selCat);
+          col2.appendChild(selMat);
+          rowG2.appendChild(col1);
+          rowG2.appendChild(col2);
+
+          const dFlex = document.createElement('div'); dFlex.className = 'd-flex gap-2';
+          const inpQty = document.createElement('input'); 
+          inpQty.type = 'number'; inpQty.className = 'form-control txt-qty'; inpQty.placeholder = 'Cantidad'; inpQty.min = '1'; inpQty.max = '1000';
+          const btnDel = document.createElement('button');
+          btnDel.type = 'button'; btnDel.className = 'btn btn-outline-danger';
+          btnDel.innerHTML = '<i class="bi bi-trash"></i>'; // Icon is safe
+          btnDel.onclick = function() { document.getElementById(rId).remove(); };
+          
+          dFlex.appendChild(inpQty);
+          dFlex.appendChild(btnDel);
+
+          div.appendChild(rowG2);
+          div.appendChild(dFlex);
           contenedor.appendChild(div);
         },
 
@@ -585,13 +677,19 @@
               const info = app.state.catalogoMap[id];
               if (info && info.cat === cat) {
                 const maxQty = app.state.stockFurgonRaw[id];
-                sM.innerHTML += `<option value="${id}">${info.nom} (Disp: ${maxQty} ${info.uni})</option>`;
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = `${info.nom} (Disp: ${maxQty} ${info.uni})`;
+                sM.appendChild(opt);
               }
             });
           } else {
             if (app.state.dbCatalogo[cat]) {
               app.state.dbCatalogo[cat].forEach(m => {
-                sM.innerHTML += `<option value="${m.id}">${m.nombre} (${m.unidad})</option>`;
+                const opt = document.createElement('option');
+                opt.value = m.id;
+                opt.textContent = `${m.nombre} (${m.unidad})`;
+                sM.appendChild(opt);
               });
             }
           }
@@ -610,18 +708,9 @@
             const res = await app.api.req('login', { usuario: u, clave: p });
             if (res.success) {
               sessionStorage.setItem('T', res.token);
-              sessionStorage.setItem('TE', res.tecnico);
-              sessionStorage.setItem('US', res.usuario);
-              sessionStorage.setItem('MAT', res.matricula);
-              sessionStorage.setItem('ADM', res.esAdmin ? '1' : '0');
-
               app.state.token = res.token;
-              app.state.tecnico = res.tecnico;
-              app.state.usuario = res.usuario;
-              app.state.matricula = res.matricula;
-              app.state.esAdmin = res.esAdmin;
-
-              app.actions.boot();
+              document.getElementById('inputPass').value = ''; // clear immediately
+              await app.actions.boot();
             } else {
               app.ui.showToast(res.error || 'Credenciales incorrectas', 'danger');
             }
@@ -633,22 +722,16 @@
         },
 
         handleLogout() {
+          app.api.req('logout', { token: app.state.token }).catch(()=>{}); // fire and forget
           sessionStorage.clear();
-          localStorage.removeItem('BK_CACHE_DATA');
           location.reload();
         },
 
         async boot() {
-          document.getElementById('viewLogin').classList.add('d-none');
-          document.getElementById('viewMain').classList.remove('d-none');
-          document.getElementById('bottomNav').classList.remove('d-none');
-          
-          document.getElementById('labelTecnicoSesion').textContent = app.state.tecnico;
-          document.getElementById('labelUserCode').textContent = app.state.usuario;
-          document.getElementById('badgeMatriculaFurgo').textContent = app.state.matricula;
-
-          document.getElementById('txtFecha').valueAsDate = new Date();
-          document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
+          if (!app.state.token) {
+              app.state.token = sessionStorage.getItem('T');
+              if(!app.state.token) return;
+          }
 
           app.ui.setLoader(true, 'Sincronizando...');
           try {
@@ -658,6 +741,22 @@
               return;
             }
             if (res.success) {
+              app.state.tecnico = res.tecnico;
+              app.state.usuario = res.usuario;
+              app.state.matricula = res.matricula;
+              app.state.esAdmin = res.esAdmin;
+
+              document.getElementById('labelTecnicoSesion').textContent = app.state.tecnico;
+              document.getElementById('labelUserCode').textContent = app.state.usuario;
+              document.getElementById('badgeMatriculaFurgo').textContent = app.state.matricula;
+              
+              document.getElementById('viewLogin').classList.add('d-none');
+              document.getElementById('viewMain').classList.remove('d-none');
+              document.getElementById('bottomNav').classList.remove('d-none');
+
+              document.getElementById('txtFecha').valueAsDate = new Date();
+              document.getElementById('txtFechaEfectivo').valueAsDate = new Date();
+
               app.state.dbEquipos = res.equipos || {};
               app.state.dbAlmacenes = res.almacenes || [];
               app.state.dbCatalogo = res.catalogo || {};
@@ -668,9 +767,11 @@
               app.ui.renderStockFurgonView(app.state.stockFurgonRaw);
               app.ui.adaptarInterfazPorRol();
               document.getElementById('lblSaldoEfectivo').textContent = parseFloat(res.saldoEfectivo || 0).toFixed(2) + ' €';
+            } else {
+               app.ui.showToast(res.error, 'danger');
             }
           } catch (e) {
-            app.ui.showToast('Modo sin conexión activado', 'warning');
+            app.ui.showToast('Error de conexión inicial', 'danger');
           } finally {
             app.ui.setLoader(false);
           }
@@ -697,7 +798,7 @@
           e.preventDefault();
           const idEq = document.getElementById('inputEquipoSearch').value.trim().toUpperCase();
           if (!idEq) {
-            app.ui.showToast('Introduzca el Nº de Serie del equipo.', 'warning');
+            app.ui.showToast('Introduzca el Nº de Serie.', 'warning');
             return;
           }
 
@@ -705,13 +806,14 @@
 
           const btns = document.querySelectorAll('.submit-btn');
           btns.forEach(b => b.disabled = true);
-          app.ui.setLoader(true, 'Registrando intervención...');
+          app.ui.setLoader(true, 'Registrando...');
 
           if (!app.state.idempotency.mantenimiento) app.utils.generarIdem('mantenimiento');
           const mat = [];
           document.querySelectorAll('#contenedorMaterialesUsados .mat-row').forEach(r => {
-            const id = r.querySelector('.sel-mat').value, c = parseFloat(r.querySelector('.txt-qty').value);
-            if (id && c > 0) mat.push({ id: id, cantidad: c });
+            const id = r.querySelector('.sel-mat').value;
+            const c = parseFloat(r.querySelector('.txt-qty').value);
+            if (id && !isNaN(c) && c > 0) mat.push({ id: id, cantidad: c });
           });
 
           try {
@@ -733,12 +835,12 @@
             });
 
             if (res.success) {
-              app.ui.showToast('✅ Parte registrado con éxito', 'success');
+              app.ui.showToast('✅ Parte registrado', 'success');
               document.getElementById('formIntervencion').reset();
               document.getElementById('txtFecha').valueAsDate = new Date();
               document.getElementById('txtModeloEquipo').value = '';
               document.getElementById('txtLocalEquipo').value = '';
-              document.getElementById('contenedorMaterialesUsados').innerHTML = '';
+              document.getElementById('contenedorMaterialesUsados').replaceChildren();
               app.state.fotos.equipo.base64 = ''; app.state.fotos.albaran.base64 = '';
               document.getElementById('imgPreviewEquipo').classList.add('d-none');
               document.getElementById('imgPreviewAlbaran').classList.add('d-none');
@@ -750,10 +852,10 @@
               app.state.formDirty = false;
               app.actions.cargarStockFurgon();
             } else {
-              app.ui.showToast(res.error || 'Error al guardar', 'danger');
+              app.ui.showToast(res.error || 'Error', 'danger');
             }
           } catch (e) {
-            app.ui.showToast('Error de comunicación', 'danger');
+            app.ui.showToast('Error de red', 'danger');
           } finally {
             btns.forEach(b => b.disabled = false);
             app.ui.setLoader(false);
@@ -794,10 +896,10 @@
               app.state.idempotency.efectivo = null;
               app.actions.cargarSaldoEfectivo();
             } else {
-              app.ui.showToast(res.error || 'Error al guardar', 'danger');
+              app.ui.showToast(res.error || 'Error', 'danger');
             }
           } catch (e) {
-            app.ui.showToast('Error al enviar movimiento', 'danger');
+            app.ui.showToast('Error de red', 'danger');
           } finally {
             btns.forEach(b => b.disabled = false);
             app.ui.setLoader(false);
@@ -810,7 +912,7 @@
           const destino = document.getElementById('selAlmacenDestino').value;
 
           if (origen === destino) {
-            app.ui.showToast('El almacén de origen y destino no pueden ser iguales.', 'warning');
+            app.ui.showToast('Origen y destino no pueden ser iguales.', 'warning');
             return;
           }
 
@@ -818,7 +920,7 @@
           document.querySelectorAll('#contenedorMaterialesTraspaso .mat-row').forEach(r => {
             const id = r.querySelector('.sel-mat').value;
             const c = parseFloat(r.querySelector('.txt-qty').value);
-            if (id && c > 0) matList.push({ id: id, cantidad: c });
+            if (id && !isNaN(c) && c > 0) matList.push({ id: id, cantidad: c });
           });
 
           if (matList.length === 0) {
@@ -828,7 +930,7 @@
 
           const btns = document.querySelectorAll('.submit-btn');
           btns.forEach(b => b.disabled = true);
-          app.ui.setLoader(true, 'Guardando traspaso...');
+          app.ui.setLoader(true, 'Procesando...');
           if (!app.state.idempotency.furgon) app.utils.generarIdem('furgon');
 
           try {
@@ -844,16 +946,17 @@
             });
 
             if (res.success) {
-              app.ui.showToast('✅ Traspaso registrado con éxito', 'success');
+              app.ui.showToast('✅ Traspaso registrado', 'success');
               document.getElementById('formFurgon').reset();
-              document.getElementById('contenedorMaterialesTraspaso').innerHTML = '';
+              document.getElementById('contenedorMaterialesTraspaso').replaceChildren();
               app.state.idempotency.furgon = null;
-              await app.actions.boot();
+              app.handlers.onModoOperacionChange(); // Reset defaults
+              await app.actions.boot(); // reload stock
             } else {
-              app.ui.showToast(res.error || 'Error al registrar', 'danger');
+              app.ui.showToast(res.error || 'Error', 'danger');
             }
           } catch (e) {
-            app.ui.showToast('Error de red al registrar', 'danger');
+            app.ui.showToast('Error de red', 'danger');
           } finally {
             btns.forEach(b => b.disabled = false);
             app.ui.setLoader(false);
@@ -862,16 +965,12 @@
       }
     };
 
-    window.addEventListener('online', () => { document.getElementById('offlineWarning').style.display = 'none'; app.ui.showToast('Conectado', 'success'); });
+    window.addEventListener('online', () => { document.getElementById('offlineWarning').style.display = 'none'; });
     window.addEventListener('offline', () => { document.getElementById('offlineWarning').style.display = 'block'; });
     window.addEventListener('beforeunload', (e) => { if (app.state.formDirty) { e.preventDefault(); e.returnValue = ''; } });
 
     document.addEventListener('DOMContentLoaded', () => {
-      const t = sessionStorage.getItem('T'), te = sessionStorage.getItem('TE'), u = sessionStorage.getItem('US'), mat = sessionStorage.getItem('MAT'), adm = sessionStorage.getItem('ADM');
-      if (t && te && u) {
-        app.state.token = t; app.state.tecnico = te; app.state.usuario = u; app.state.matricula = mat || 'CENTRAL'; app.state.esAdmin = adm === '1';
-        app.actions.boot();
-      }
+        app.actions.boot(); // Relies solely on token in sessionStorage now
     });
   </script>
 </body>
