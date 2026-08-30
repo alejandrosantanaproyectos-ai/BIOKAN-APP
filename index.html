@@ -360,9 +360,9 @@
           if (modulo === 'efectivo') app.actions.cargarSaldoEfectivo();
           if (modulo === 'furgon') app.actions.cargarStockFurgon();
         },
-        renderStockFurgonView(stockObj) {
+renderStockFurgonView(stockObj) {
           const tb = document.getElementById('tbodyStockFurgon');
-          tb.replaceChildren(); // Safe DOM clear
+          tb.replaceChildren();
           
           const keys = Object.keys(stockObj || {});
           if (keys.length === 0) {
@@ -375,8 +375,11 @@
           } else {
             keys.sort().forEach(id => {
               const m = app.state.catalogoMap[id] || { nom: id, cat: 'Varios', uni: 'UD' };
+              const cantidad = stockObj[id];
+              const esNegativo = cantidad < 0;
               
               const tr = document.createElement('tr');
+              if (esNegativo) tr.className = 'table-danger'; // Resalta la fila si es negativo
               
               const tdInfo = document.createElement('td');
               const divNom = document.createElement('div');
@@ -391,8 +394,8 @@
               const tdBadge = document.createElement('td');
               tdBadge.className = 'text-end align-middle';
               const span = document.createElement('span');
-              span.className = 'badge bg-primary fs-6';
-              span.textContent = `${stockObj[id]} ${m.uni}`;
+              span.className = `badge ${esNegativo ? 'bg-danger' : 'bg-primary'} fs-6`;
+              span.textContent = `${cantidad} ${m.uni}`;
               tdBadge.appendChild(span);
               
               tr.appendChild(tdInfo);
