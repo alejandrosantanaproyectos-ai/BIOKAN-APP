@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <!-- Securing Headers: Strict CSP -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://script.google.com https://*.googleusercontent.com; img-src 'self' data: blob: https:; connect-src 'self' https://cdn.jsdelivr.net https://script.google.com https://*.googleusercontent.com;">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <title>Biokan - Field Operations</title>
@@ -18,9 +17,9 @@
     .header-box { background: linear-gradient(135deg, #1e293b 0%, var(--bk-dark) 100%); color: #fff; padding: 18px; border-radius: 0 0 16px 16px; margin-bottom: 20px;}
     .btn-primary-custom { background-color: var(--bk-primary); border: none; border-radius: 8px; font-weight: 600; padding: 12px; }
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #ffffff; box-shadow: 0 -4px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around; z-index: 1000; padding-bottom: env(safe-area-inset-bottom); border-radius: 20px 20px 0 0; }
-    .nav-item-bottom { flex: 1; text-align: center; padding: 12px 0; color: #94a3b8; font-size: 0.75rem; cursor: pointer; border-top: 3px solid transparent; transition: all 0.2s; }
+    .nav-item-bottom { flex: 1; text-align: center; padding: 10px 0; color: #94a3b8; font-size: 0.72rem; cursor: pointer; border-top: 3px solid transparent; transition: all 0.2s; }
     .nav-item-bottom.active { color: var(--bk-primary); border-top-color: var(--bk-primary); font-weight: 700; background: linear-gradient(to top, rgba(2,132,199,0.08), transparent); }
-    .nav-item-bottom i { font-size: 1.4rem; display: block; margin-bottom: 2px; }
+    .nav-item-bottom i { font-size: 1.35rem; display: block; margin-bottom: 2px; }
     #offlineWarning { position: fixed; top: 0; left: 0; width: 100%; background-color: #ef4444; color: white; text-align: center; padding: 6px; font-weight: bold; font-size: 0.85rem; z-index: 2000; display: none; }
     .preview-container { width: 100%; height: 120px; border: 2px dashed #cbd5e1; border-radius: 8px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;}
     .preview-container img { width: 100%; height: 100%; object-fit: cover; }
@@ -28,6 +27,8 @@
     .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1055; width: 90%; max-width: 400px;}
     .loader-overlay { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; color: #fff; }
     .wallet-card { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; border-radius: 12px; padding: 20px; text-align: center; }
+    .parte-card { border-left: 4px solid var(--bk-primary); transition: transform 0.15s; }
+    .parte-card:active { transform: scale(0.99); }
   </style>
 </head>
 <body>
@@ -178,6 +179,15 @@
         </form>
       </div>
 
+      <!-- MÓDULO NUEVO: HISTORIAL / ÚLTIMOS 10 PARTES -->
+      <div id="moduleHistorial" class="d-none px-2 pb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold text-primary mb-0"><i class="bi bi-clock-history me-1"></i>Mis Últimos 10 Partes</h6>
+          <button class="btn btn-sm btn-light border rounded-pill px-3" onclick="app.actions.cargarUltimosPartes()"><i class="bi bi-arrow-clockwise me-1"></i>Refrescar</button>
+        </div>
+        <div id="contenedorListaPartes"></div>
+      </div>
+
       <!-- MÓDULO 2: CARTERA DE EFECTIVO -->
       <div id="moduleEfectivo" class="d-none px-2 pb-5">
         <div class="wallet-card mb-4 shadow-sm">
@@ -221,7 +231,7 @@
         </div>
       </div>
 
-      <!-- MÓDULO 3: GESTIÓN DE TRASPASOS CON MODO RECEPCIÓN / ENTREGA -->
+      <!-- MÓDULO 3: GESTIÓN DE TRASPASOS -->
       <div id="moduleFurgon" class="d-none px-2 pb-5">
         <div class="card card-custom mb-3 border-primary">
           <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
@@ -240,7 +250,6 @@
         <div class="card card-custom p-3 mb-4 bg-light border">
           <h6 class="fw-bold text-dark mb-3"><i class="bi bi-arrow-left-right me-1"></i>Traspaso entre Almacenes</h6>
           <form id="formFurgon" onsubmit="app.actions.handleGuardarTraspasoFurgon(event)">
-            
             <div class="mb-3">
               <label class="form-label fw-bold small text-secondary">Tipo de Operación *</label>
               <select class="form-select form-select-lg fw-bold text-primary" id="selModoOperacion" onchange="app.handlers.onModoOperacionChange()" required>
@@ -277,10 +286,13 @@
         </div>
       </div>
 
-      <!-- BOTTOM BAR -->
+      <!-- BOTTOM BAR (4 PESTAÑAS) -->
       <div class="bottom-nav d-none" id="bottomNav">
         <div class="nav-item-bottom active" id="nav-mantenimiento" onclick="app.ui.switchModule('mantenimiento')">
-          <i class="bi bi-tools"></i>Partes
+          <i class="bi bi-tools"></i>Nuevo
+        </div>
+        <div class="nav-item-bottom" id="nav-historial" onclick="app.ui.switchModule('historial')">
+          <i class="bi bi-clock-history"></i>Últimos
         </div>
         <div class="nav-item-bottom" id="nav-efectivo" onclick="app.ui.switchModule('efectivo')">
           <i class="bi bi-wallet2"></i>Cartera
@@ -293,10 +305,93 @@
     </div>
   </div>
 
+  <!-- MODAL DE EDICIÓN DE PARTE -->
+  <div class="modal fade" id="modalEditarParte" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-dark text-white">
+          <h6 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2 text-info"></i>Modificar Parte de Trabajo</h6>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="formModalEditar" onsubmit="app.actions.handleGuardarEdicionParte(event)">
+          <div class="modal-body p-3">
+            <input type="hidden" id="editFilaHoja">
+            
+            <div class="row g-2 mb-2">
+              <div class="col-6">
+                <label class="form-label small text-muted mb-1">Fecha</label>
+                <input type="date" class="form-control" id="editFecha" required>
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted mb-1">ID Equipo</label>
+                <input type="text" class="form-control fw-bold bg-light" id="editIdEquipo" readonly>
+              </div>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small text-muted mb-1">Local / Ubicación</label>
+              <input type="text" class="form-control" id="editLocal" placeholder="Local">
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small text-muted mb-1">Tipo Intervención</label>
+              <select class="form-select" id="editTipoMant" required>
+                <option value="Programado">Mantenimiento Programado</option>
+                <option value="Reparacion">Reparación de Avería</option>
+                <option value="Instalacion">Nueva Instalación</option>
+                <option value="Sustitucion">Sustitución de Equipo</option>
+                <option value="Retirada">Retirada de Equipo</option>
+              </select>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small text-muted mb-1">Estado Final</label>
+              <select class="form-select" id="editEstadoFinal" required>
+                <option value="Operativo">Operativo (100% Funcional)</option>
+                <option value="Operativo con restricciones">Operativo con restricciones</option>
+                <option value="Fuera de servicio">Fuera de servicio</option>
+                <option value="En espera de repuestos">A la espera de repuestos</option>
+              </select>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label small text-muted mb-1">Descripción</label>
+              <textarea class="form-control" id="editDescripcion" rows="2" required></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label small text-muted mb-1">Realizar en próxima visita</label>
+              <textarea class="form-control" id="editProximaVisita" rows="2"></textarea>
+            </div>
+
+            <div class="p-2 bg-light rounded border">
+              <label class="small fw-bold d-block mb-1 text-secondary">Actualizar Fotos (opcional)</label>
+              <div class="row g-2">
+                <div class="col-6">
+                  <input type="file" class="form-control form-control-sm" id="editFileEquipo" accept="image/*" onchange="app.handlers.onFotoEditSelected(this, 'equipo')">
+                  <small class="text-muted d-block mt-1" id="lblEditFotoEq">Sin foto nueva</small>
+                </div>
+                <div class="col-6">
+                  <input type="file" class="form-control form-control-sm" id="editFileAlbaran" accept="image/*" onchange="app.handlers.onFotoEditSelected(this, 'albaran')">
+                  <small class="text-muted d-block mt-1" id="lblEditFotoAlb">Sin foto nueva</small>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light p-2">
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary btn-sm px-3 fw-bold">Guardar Cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
     const app = {
       config: {
-        // REPLACE WITH YOUR APPS SCRIPT SECURE URL
         apiUrl: "https://script.google.com/macros/s/AKfycbyvgrAP8oMKzZ43yOk4Fdm4PTdSxcdX0RAk0P-bD3eZDQ9G6hAyhS1qcpBeQTNhhKlK/exec", 
         timeoutMs: 35000,
         maxImageSize: 819200
@@ -307,6 +402,9 @@
         dbEquipos: {}, dbAlmacenes: [], dbCatalogo: {}, catalogoMap: {}, stockFurgonRaw: {},
         idempotency: { mantenimiento: null, efectivo: null, furgon: null },
         fotos: { equipo: { base64: '' }, albaran: { base64: '' }, factura: { base64: '' } },
+        fotosEdit: { equipo: '', albaran: '' },
+        ultimosPartes: [],
+        bsModal: null,
         formDirty: false
       },
 
@@ -319,7 +417,6 @@
           const tC = document.getElementById('toastContainer');
           const toast = document.createElement('div');
           toast.className = `toast align-items-center text-bg-${type} border-0 show mb-2 shadow`;
-          // Prevent XSS in toasts
           const innerWrapper = document.createElement('div');
           innerWrapper.className = 'd-flex';
           const tBody = document.createElement('div');
@@ -329,16 +426,13 @@
           btn.type = 'button';
           btn.className = 'btn-close btn-close-white me-2 m-auto';
           btn.onclick = function() { toast.remove(); };
-          
           innerWrapper.appendChild(tBody);
           innerWrapper.appendChild(btn);
           toast.appendChild(innerWrapper);
-          
           tC.appendChild(toast);
           setTimeout(() => toast.remove(), 3500);
         },
         limpiarSelect(el, text) {
-           // Safe replacement for innerHTML
            el.replaceChildren();
            const opt = document.createElement('option');
            opt.value = "";
@@ -346,7 +440,7 @@
            el.appendChild(opt);
         },
         switchModule(modulo) {
-          ['mantenimiento', 'efectivo', 'furgon'].forEach(m => {
+          ['mantenimiento', 'historial', 'efectivo', 'furgon'].forEach(m => {
             const btn = document.getElementById('nav-' + m);
             const view = document.getElementById('module' + m.charAt(0).toUpperCase() + m.slice(1));
             if (btn) btn.classList.remove('active');
@@ -357,10 +451,11 @@
           if (actBtn) actBtn.classList.add('active');
           if (actView) actView.classList.remove('d-none');
 
+          if (modulo === 'historial') app.actions.cargarUltimosPartes();
           if (modulo === 'efectivo') app.actions.cargarSaldoEfectivo();
           if (modulo === 'furgon') app.actions.cargarStockFurgon();
         },
-renderStockFurgonView(stockObj) {
+        renderStockFurgonView(stockObj) {
           const tb = document.getElementById('tbodyStockFurgon');
           tb.replaceChildren();
           
@@ -379,7 +474,7 @@ renderStockFurgonView(stockObj) {
               const esNegativo = cantidad < 0;
               
               const tr = document.createElement('tr');
-              if (esNegativo) tr.className = 'table-danger'; // Resalta la fila si es negativo
+              if (esNegativo) tr.className = 'table-danger';
               
               const tdInfo = document.createElement('td');
               const divNom = document.createElement('div');
@@ -404,6 +499,101 @@ renderStockFurgonView(stockObj) {
             });
           }
         },
+        renderUltimosPartesView(partes) {
+          const cont = document.getElementById('contenedorListaPartes');
+          cont.replaceChildren();
+
+          if (!partes || partes.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'text-center text-muted py-5';
+            empty.innerHTML = '<i class="bi bi-inbox fs-1 d-block mb-2"></i>No tienes partes registrados recientemente.';
+            cont.appendChild(empty);
+            return;
+          }
+
+          partes.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'card card-custom p-3 mb-3 parte-card shadow-sm';
+
+            const headerRow = document.createElement('div');
+            headerRow.className = 'd-flex justify-content-between align-items-start mb-2';
+
+            const colLeft = document.createElement('div');
+            const h6 = document.createElement('h6');
+            h6.className = 'fw-bold mb-0 text-dark';
+            h6.textContent = `${p.idEquipo} - ${p.local || 'Sin local'}`;
+            const smFecha = document.createElement('small');
+            smFecha.className = 'text-muted';
+            smFecha.textContent = `${p.fecha} | ${p.tipoMantenimiento}`;
+            colLeft.appendChild(h6);
+            colLeft.appendChild(smFecha);
+
+            const badgeEstado = document.createElement('span');
+            badgeEstado.className = `badge ${p.estadoFinal === 'Operativo' ? 'bg-success' : 'bg-warning text-dark'}`;
+            badgeEstado.textContent = p.estadoFinal;
+
+            headerRow.appendChild(colLeft);
+            headerRow.appendChild(badgeEstado);
+
+            const pDesc = document.createElement('p');
+            pDesc.className = 'small text-secondary mb-2';
+            pDesc.textContent = p.descripcion;
+
+            if (p.observacionesProximaVisita) {
+              const pProx = document.createElement('div');
+              pProx.className = 'small text-danger bg-danger bg-opacity-10 p-2 rounded mb-2';
+              pProx.innerHTML = `<strong>Próxima visita:</strong> ${p.observacionesProximaVisita}`;
+              card.appendChild(pProx);
+            }
+
+            const footerRow = document.createElement('div');
+            footerRow.className = 'd-flex justify-content-between align-items-center mt-2 pt-2 border-top';
+
+            const divFotos = document.createElement('div');
+            divFotos.className = 'd-flex gap-1';
+            if (p.fotoEquipoUrl) {
+              const aEq = document.createElement('a');
+              aEq.href = p.fotoEquipoUrl; aEq.target = '_blank';
+              aEq.className = 'btn btn-sm btn-outline-primary py-1 px-2';
+              aEq.innerHTML = '<i class="bi bi-camera"></i> Foto';
+              divFotos.appendChild(aEq);
+            }
+            if (p.fotoAlbaranUrl) {
+              const aAlb = document.createElement('a');
+              aAlb.href = p.fotoAlbaranUrl; aAlb.target = '_blank';
+              aAlb.className = 'btn btn-sm btn-outline-secondary py-1 px-2';
+              aAlb.innerHTML = '<i class="bi bi-file-text"></i> Albarán';
+              divFotos.appendChild(aAlb);
+            }
+
+            const divAcciones = document.createElement('div');
+            divAcciones.className = 'd-flex gap-1';
+
+            const btnEdit = document.createElement('button');
+            btnEdit.type = 'button';
+            btnEdit.className = 'btn btn-sm btn-outline-dark py-1 px-2';
+            btnEdit.innerHTML = '<i class="bi bi-pencil"></i>';
+            btnEdit.onclick = function() { app.actions.abrirModalEditar(p); };
+
+            const btnDel = document.createElement('button');
+            btnDel.type = 'button';
+            btnDel.className = 'btn btn-sm btn-outline-danger py-1 px-2';
+            btnDel.innerHTML = '<i class="bi bi-trash"></i>';
+            btnDel.onclick = function() { app.actions.eliminarParte(p.filaHoja); };
+
+            divAcciones.appendChild(btnEdit);
+            divAcciones.appendChild(btnDel);
+
+            footerRow.appendChild(divFotos);
+            footerRow.appendChild(divAcciones);
+
+            card.appendChild(headerRow);
+            card.appendChild(pDesc);
+            card.appendChild(footerRow);
+
+            cont.appendChild(card);
+          });
+        },
         popularSelectoresUI() {
           const dl = document.getElementById('dlEquipos');
           dl.replaceChildren();
@@ -419,24 +609,29 @@ renderStockFurgonView(stockObj) {
         },
         adaptarInterfazPorRol() {
           const navMant = document.getElementById('nav-mantenimiento');
+          const navHist = document.getElementById('nav-historial');
           const modMant = document.getElementById('moduleMantenimiento');
           const lblFur = document.getElementById('labelFurgonNav');
           const iconFur = document.getElementById('iconFurgonNav');
           const lblTitulo = document.getElementById('lblTituloFurgonTab');
 
+          const nombreAlmacen = app.state.matricula || 'CENTRAL';
+
           if (app.state.esAdmin) {
             if (navMant) navMant.classList.add('d-none');
+            if (navHist) navHist.classList.remove('d-none');
             if (modMant) modMant.classList.add('d-none');
 
-            lblFur.textContent = 'Central';
+            lblFur.textContent = nombreAlmacen === 'CENTRAL' ? 'Central' : nombreAlmacen;
             iconFur.className = 'bi bi-buildings';
-            lblTitulo.textContent = 'Almacén Central';
+            lblTitulo.textContent = `Almacén ${nombreAlmacen}`;
             app.ui.switchModule('furgon');
           } else {
             if (navMant) navMant.classList.remove('d-none');
+            if (navHist) navHist.classList.remove('d-none');
             lblFur.textContent = 'Furgón';
             iconFur.className = 'bi bi-truck';
-            lblTitulo.textContent = `Vehículo ${app.state.matricula}`;
+            lblTitulo.textContent = `Vehículo ${nombreAlmacen}`;
             app.ui.switchModule('mantenimiento');
           }
         }
@@ -445,7 +640,7 @@ renderStockFurgonView(stockObj) {
       utils: {
         async compress(file) {
           const bmp = await createImageBitmap(file);
-          let w = bmp.width, h = bmp.height, max = 1600, q = 0.80; // slightly better quality start
+          let w = bmp.width, h = bmp.height, max = 1600, q = 0.80;
           if (w > max || h > max) {
             if (w > h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; }
           }
@@ -457,16 +652,10 @@ renderStockFurgonView(stockObj) {
           for (let i = 0; i < 5; i++) {
             blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', q));
             if (blob.size <= app.config.maxImageSize) break;
-            q -= 0.15; 
-            canvas.width *= 0.85; 
-            canvas.height *= 0.85; 
-            ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+            q -= 0.15; canvas.width *= 0.85; canvas.height *= 0.85; ctx.drawImage(bmp, 0, 0, canvas.width, canvas.height);
           }
           bmp.close();
-          if (blob.size > app.config.maxImageSize) {
-              throw new Error("Imagen demasiado compleja para reducir.");
-          }
-          
+          if (blob.size > app.config.maxImageSize) throw new Error("Imagen demasiado compleja.");
           const b64 = await new Promise(r => { const rd = new FileReader(); rd.onloadend = () => r(rd.result); rd.readAsDataURL(blob); });
           return { base64: b64, sizeMsg: `${Math.round(file.size / 1024)}KB ➔ ${Math.round(blob.size / 1024)}KB` };
         },
@@ -490,16 +679,13 @@ renderStockFurgonView(stockObj) {
             const res = await fetch(app.config.apiUrl, {
               method: 'POST',
               body: body,
-              redirect: 'follow', // Crucial to avoid CORS 200 ERR_FAILED on redirect
+              redirect: 'follow',
               signal: ctrl.signal
             });
             clearTimeout(tid);
             if (!res.ok) throw new Error('HTTP ' + res.status);
-            
             const data = await res.json();
-            if(data.sessionExpired) {
-               app.actions.handleLogout(); // Force logout if server says token died
-            }
+            if(data.sessionExpired) app.actions.handleLogout();
             return data;
           } catch (e) {
             clearTimeout(tid);
@@ -561,13 +747,11 @@ renderStockFurgonView(stockObj) {
             document.getElementById('lblPlaceholder' + cap).classList.remove('d-none');
             return;
           }
-          
           if (!file.type.startsWith('image/')) {
               app.ui.showToast('Solo se permiten imágenes.', 'danger');
               input.value = '';
               return;
           }
-          
           app.ui.setLoader(true, 'Comprimiendo...');
           try {
             const res = await app.utils.compress(file);
@@ -578,6 +762,27 @@ renderStockFurgonView(stockObj) {
             document.getElementById('meta' + cap).textContent = `✔ (${res.sizeMsg})`;
           } catch (e) {
             app.ui.showToast('Error procesando foto', 'danger');
+            input.value = '';
+          } finally {
+            app.ui.setLoader(false);
+          }
+        },
+
+        async onFotoEditSelected(input, tipo) {
+          const file = input.files[0];
+          const lbl = document.getElementById(tipo === 'equipo' ? 'lblEditFotoEq' : 'lblEditFotoAlb');
+          if (!file) {
+            app.state.fotosEdit[tipo] = '';
+            lbl.textContent = 'Sin foto nueva';
+            return;
+          }
+          app.ui.setLoader(true, 'Comprimiendo foto...');
+          try {
+            const res = await app.utils.compress(file);
+            app.state.fotosEdit[tipo] = res.base64;
+            lbl.textContent = `✔ Lista (${res.sizeMsg})`;
+          } catch (e) {
+            app.ui.showToast('Error en imagen', 'danger');
             input.value = '';
           } finally {
             app.ui.setLoader(false);
@@ -612,7 +817,6 @@ renderStockFurgonView(stockObj) {
           const rId = 'r_' + Date.now();
           div.id = rId;
 
-          // Build selects safely
           const rowG2 = document.createElement('div'); rowG2.className = 'row g-2 mb-2';
           const col1 = document.createElement('div'); col1.className = 'col-12';
           const col2 = document.createElement('div'); col2.className = 'col-12';
@@ -654,7 +858,7 @@ renderStockFurgonView(stockObj) {
           inpQty.type = 'number'; inpQty.className = 'form-control txt-qty'; inpQty.placeholder = 'Cantidad'; inpQty.min = '1'; inpQty.max = '1000';
           const btnDel = document.createElement('button');
           btnDel.type = 'button'; btnDel.className = 'btn btn-outline-danger';
-          btnDel.innerHTML = '<i class="bi bi-trash"></i>'; // Icon is safe
+          btnDel.innerHTML = '<i class="bi bi-trash"></i>';
           btnDel.onclick = function() { document.getElementById(rId).remove(); };
           
           dFlex.appendChild(inpQty);
@@ -712,7 +916,7 @@ renderStockFurgonView(stockObj) {
             if (res.success) {
               sessionStorage.setItem('T', res.token);
               app.state.token = res.token;
-              document.getElementById('inputPass').value = ''; // clear immediately
+              document.getElementById('inputPass').value = '';
               await app.actions.boot();
             } else {
               app.ui.showToast(res.error || 'Credenciales incorrectas', 'danger');
@@ -725,12 +929,12 @@ renderStockFurgonView(stockObj) {
         },
 
         handleLogout() {
-          app.api.req('logout', { token: app.state.token }).catch(()=>{}); // fire and forget
+          app.api.req('logout', { token: app.state.token }).catch(()=>{});
           sessionStorage.clear();
           location.reload();
         },
 
-async boot() {
+        async boot() {
           if (!app.state.token) {
               app.state.token = sessionStorage.getItem('T');
               if(!app.state.token) return;
@@ -770,11 +974,110 @@ async boot() {
               app.ui.renderStockFurgonView(app.state.stockFurgonRaw);
               app.ui.adaptarInterfazPorRol();
               document.getElementById('lblSaldoEfectivo').textContent = parseFloat(res.saldoEfectivo || 0).toFixed(2) + ' €';
+
+              // Inicializar modal bootstrap
+              const modalEl = document.getElementById('modalEditarParte');
+              if (modalEl && window.bootstrap) {
+                app.state.bsModal = new bootstrap.Modal(modalEl);
+              }
             } else {
                app.ui.showToast(res.error, 'danger');
             }
           } catch (e) {
             app.ui.showToast('Error de conexión inicial', 'danger');
+          } finally {
+            app.ui.setLoader(false);
+          }
+        },
+
+        async cargarUltimosPartes() {
+          app.ui.setLoader(true, 'Cargando partes...');
+          try {
+            const res = await app.api.req('obtenerUltimosPartes', { token: app.state.token });
+            if (res.success) {
+              app.state.ultimosPartes = res.partes || [];
+              app.ui.renderUltimosPartesView(app.state.ultimosPartes);
+            } else {
+              app.ui.showToast(res.error || 'Error al cargar partes', 'danger');
+            }
+          } catch (e) {
+            app.ui.showToast('Error de comunicación', 'danger');
+          } finally {
+            app.ui.setLoader(false);
+          }
+        },
+
+        abrirModalEditar(p) {
+          document.getElementById('editFilaHoja').value = p.filaHoja;
+          document.getElementById('editFecha').value = p.fecha;
+          document.getElementById('editIdEquipo').value = p.idEquipo;
+          document.getElementById('editLocal').value = p.local;
+          document.getElementById('editTipoMant').value = p.tipoMantenimiento;
+          document.getElementById('editEstadoFinal').value = p.estadoFinal;
+          document.getElementById('editDescripcion').value = p.descripcion;
+          document.getElementById('editProximaVisita').value = p.observacionesProximaVisita;
+
+          app.state.fotosEdit.equipo = '';
+          app.state.fotosEdit.albaran = '';
+          document.getElementById('editFileEquipo').value = '';
+          document.getElementById('editFileAlbaran').value = '';
+          document.getElementById('lblEditFotoEq').textContent = p.fotoEquipoUrl ? 'Foto actual guardada' : 'Sin foto';
+          document.getElementById('lblEditFotoAlb').textContent = p.fotoAlbaranUrl ? 'Albarán actual guardado' : 'Sin foto';
+
+          if (app.state.bsModal) app.state.bsModal.show();
+        },
+
+        async handleGuardarEdicionParte(e) {
+          e.preventDefault();
+          app.ui.setLoader(true, 'Guardando cambios...');
+          try {
+            const res = await app.api.req('modificarIntervencion', {
+              token: app.state.token,
+              payload: {
+                filaHoja: document.getElementById('editFilaHoja').value,
+                fechaMantenimiento: document.getElementById('editFecha').value,
+                idEquipo: document.getElementById('editIdEquipo').value,
+                local: document.getElementById('editLocal').value,
+                tipoMantenimiento: document.getElementById('editTipoMant').value,
+                estadoFinal: document.getElementById('editEstadoFinal').value,
+                descripcion: document.getElementById('editDescripcion').value,
+                observacionesProximaVisita: document.getElementById('editProximaVisita').value,
+                fotoEquipoBase64: app.state.fotosEdit.equipo,
+                fotoAlbaranBase64: app.state.fotosEdit.albaran
+              }
+            });
+
+            if (res.success) {
+              app.ui.showToast('✅ Parte actualizado con éxito', 'success');
+              if (app.state.bsModal) app.state.bsModal.hide();
+              await app.actions.cargarUltimosPartes();
+            } else {
+              app.ui.showToast(res.error || 'No se pudo actualizar', 'danger');
+            }
+          } catch (e) {
+            app.ui.showToast('Error de red al actualizar', 'danger');
+          } finally {
+            app.ui.setLoader(false);
+          }
+        },
+
+        async eliminarParte(filaHoja) {
+          if (!confirm('¿Seguro que deseas eliminar definitivamente este parte de trabajo?')) return;
+          app.ui.setLoader(true, 'Eliminando parte...');
+          try {
+            const res = await app.api.req('eliminarIntervencion', {
+              token: app.state.token,
+              payload: { filaHoja: filaHoja }
+            });
+
+            if (res.success) {
+              app.ui.showToast('🗑️ Parte eliminado', 'success');
+              await app.actions.cargarUltimosPartes();
+            } else {
+              app.ui.showToast(res.error || 'No se pudo eliminar', 'danger');
+            }
+          } catch (e) {
+            app.ui.showToast('Error de red al eliminar', 'danger');
           } finally {
             app.ui.setLoader(false);
           }
@@ -953,8 +1256,8 @@ async boot() {
               document.getElementById('formFurgon').reset();
               document.getElementById('contenedorMaterialesTraspaso').replaceChildren();
               app.state.idempotency.furgon = null;
-              app.handlers.onModoOperacionChange(); // Reset defaults
-              await app.actions.boot(); // reload stock
+              app.handlers.onModoOperacionChange();
+              await app.actions.boot();
             } else {
               app.ui.showToast(res.error || 'Error', 'danger');
             }
@@ -973,7 +1276,7 @@ async boot() {
     window.addEventListener('beforeunload', (e) => { if (app.state.formDirty) { e.preventDefault(); e.returnValue = ''; } });
 
     document.addEventListener('DOMContentLoaded', () => {
-        app.actions.boot(); // Relies solely on token in sessionStorage now
+        app.actions.boot();
     });
   </script>
 </body>
